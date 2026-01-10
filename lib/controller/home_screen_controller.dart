@@ -300,15 +300,7 @@ class HomeScreenController extends GetxController {
       final Set<String> allHouseholdIds = {};
 
       for (final ord in orders) {
-        final raw = ord.service?.additionalDetail ?? '{}';
-
-        Map<String, dynamic>? detail;
-        try {
-          final parsed = jsonDecode(raw.toString());
-          detail = (parsed is Map) ? parsed.cast<String, dynamic>() : null;
-        } catch (_) {
-          detail = null;
-        }
+        final Map<String, dynamic>? detail = ord.service?.additionalDetail;
         if (detail == null) continue;
 
         final hhDyn = detail['household'];
@@ -360,14 +352,7 @@ class HomeScreenController extends GetxController {
       // ---------- REPORT: report_1...report_n (unchanged) ----------
       final Map<String, List<ServiceWrapper>> reportFileIdToOrders = {};
       for (final order in orders) {
-        final raw = order.service?.additionalDetail ?? '{}';
-        Map<String, dynamic>? detail;
-        try {
-          final parsed = jsonDecode(raw.toString());
-          detail = (parsed is Map) ? parsed.cast<String, dynamic>() : null;
-        } catch (_) {
-          detail = null;
-        }
+        final Map<String, dynamic>? detail = order.service?.additionalDetail;
         if (detail == null) continue;
 
         for (final entry in detail.entries) {
@@ -423,7 +408,19 @@ class HomeScreenController extends GetxController {
     if ((result?.serviceWrappers ?? []).isNotEmpty) {
 
       getOrderDetails.clear();
-      getOrderDetails = AppUtils().checkIsGig(userRequest?.roles ?? []) ? await enrichOrdersWithImageUrls(result?.serviceWrappers?.where((s) => (s.workflow?.assignes ?? []).contains(userRequest?.uuid) || s.service?.applicationStatus == "RESOLVED" ).toList() ?? [], ApiConstants.tenantId) : await enrichOrdersWithImageUrls(result?.serviceWrappers ?? [], ApiConstants.tenantId);
+      // Filter orders to only show PLOTROL app records
+      final plotrolOrders = result?.serviceWrappers
+          ?.where((s) => s.service?.additionalDetail?['appSource'] == 'PLOTROL')
+          .toList() ?? [];
+
+      getOrderDetails = AppUtils().checkIsGig(userRequest?.roles ?? [])
+          ? await enrichOrdersWithImageUrls(
+              plotrolOrders
+                  .where((s) => (s.workflow?.assignes ?? []).contains(userRequest?.uuid) ||
+                      s.service?.applicationStatus == "RESOLVED")
+                  .toList(),
+              ApiConstants.tenantId)
+          : await enrichOrdersWithImageUrls(plotrolOrders, ApiConstants.tenantId);
       pendingOrders.clear();
       todayOrders.clear();
       otherOrders.clear();
@@ -460,6 +457,7 @@ class HomeScreenController extends GetxController {
           otherOrders.add(order);
         }
         if (order.workflow?.action == 'ASSIGN') {
+          createdOrders.add(order);
           acceptedOrders.add(order);
         }
         // else if (order.orderstatus == 'active') {

@@ -47,7 +47,8 @@ class RequesterSignup extends StatelessWidget {
     );
     return Scaffold(
       backgroundColor: Colors.white,
-      body: GetBuilder<RequesterLoginController>(
+      body: SafeArea(
+        child: GetBuilder<RequesterLoginController>(
           builder: (controller) {
             return Sizer(
               builder: (context, orientation, screenType) {
@@ -397,8 +398,10 @@ class RequesterSignup extends StatelessWidget {
               },
             );
           }
+        ),
       ),
-      bottomNavigationBar:  Row(
+      bottomNavigationBar: SafeArea(
+        child: Row(
         children: [
           Expanded(
             child: Padding(
@@ -427,6 +430,7 @@ class RequesterSignup extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }

@@ -430,8 +430,8 @@ class OrderDetailsController extends GetxController {
         try {
 
           final Map<String, dynamic> additionalDetailMap =
-          (order.service!.additionalDetail != null && order.service!.additionalDetail!.isNotEmpty)
-              ? Map<String, dynamic>.from(jsonDecode(order.service!.additionalDetail.toString()))
+          order.service!.additionalDetail != null
+              ? Map<String, dynamic>.from(order.service!.additionalDetail!)
               : {};
           final bool isUTL = unableToLocate.value;
         AuditDetails auditDetails = AuditDetails(
@@ -464,13 +464,13 @@ class OrderDetailsController extends GetxController {
         service?.additionalDetail =
         AppUtils().checkIsGig(user.roles ?? []) ? service.additionalDetail !=
             null
-            ? jsonEncode(
-            {
+            ? {
               ...additionalDetailMap,
               if (uploadedImageList.isNotEmpty)
                 "checklist":  selectedCheckBoxItems.join("|").toString(),
               "unableToLocateProperty": isUTL ,
               "remarks": remarksCtrl.value ?? '',
+              "appSource": "PLOTROL",
               if (uploadedImageList.isNotEmpty)
                 ...Map.fromEntries(
                   uploadedImageList.asMap().entries.map(
@@ -481,14 +481,14 @@ class OrderDetailsController extends GetxController {
                   ),
                 ),
             }
-        )
-            : jsonEncode({
+            : {
           if (uploadedImageList.isNotEmpty)
             "checklist":  selectedCheckBoxItems.join("|").toString(),
           "unableToLocateProperty": isUTL ,
           "remarks": remarksCtrl.value ?? '',
+          "appSource": "PLOTROL",
 
-        }) : order.service?.additionalDetail;
+        } : order.service?.additionalDetail;
         workflow?.hrmsAssignes =
         order.service?.applicationStatus == "PENDING_ASSIGNMENT" &&
             AppUtils().checkIsGig(user.roles ?? [])

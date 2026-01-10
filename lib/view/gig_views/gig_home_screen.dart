@@ -17,6 +17,7 @@ import '../../model/response/book_service/pgr_create_response.dart';
 import '../../widgets/thumbnail_collage.dart';
 import '../image_grid_screen.dart';
 import '../order_details.dart';
+import '../view_all_orders_screen.dart';
 
 class GigHomeScreen extends StatelessWidget {
   GigHomeScreen({super.key});
@@ -40,15 +41,36 @@ class GigHomeScreen extends StatelessWidget {
             homeScreenController.getOrdersApiFunction();
           }, builder: (controller) {
             List<Widget> widgetList = [
-              const ReusableTextWidget(
-                text: 'Today Tasks',
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
+              Row(
+                children: [
+                  const ReusableTextWidget(
+                    text: 'Today Tasks',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  const Spacer(),
+                  InkWell(
+                    onTap: () {
+                      Get.to(() => ViewAllOrdersScreen());
+                    },
+                    child: (controller.todayOrders.isNotEmpty)
+                        ? const ReusableTextWidget(
+                            text: 'View All',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            isUnderText: TextDecoration.underline,
+                          )
+                        : const SizedBox(),
+                  ),
+                ],
               ),
               SizedBox(
                 height: 1.h,
               ),
-              OnGoingTask(isVerticalScrollable: true),
+              OnGoingTask(
+                isVerticalScrollable: true,
+                maxItems: 5,
+              ),
               SizedBox(
                 height: 2.5.h,
               ),
@@ -181,12 +203,14 @@ class OnGoingTask extends StatelessWidget {
   final bool isVerticalScrollable;
   final bool isForStatusScreen;
   final String status;
+  final int? maxItems;
 
   OnGoingTask({
     super.key,
     this.isVerticalScrollable = false,
     this.isForStatusScreen = false,
     this.status = '',
+    this.maxItems,
   });
 
   final HomeScreenController homeScreenController =
@@ -270,10 +294,28 @@ class OnGoingTask extends StatelessWidget {
             if (controller.todayOrders.isEmpty) {
               return SizedBox(
                 height: Get.height * 0.6,
-                child: const Center(
-                  child: ReusableTextWidget(
-                    text: 'No Tasks Found for Today ☹',
-                    fontSize: 15,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const ReusableTextWidget(
+                        text: 'No Tasks Found for Today ☹',
+                        fontSize: 15,
+                      ),
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: () {
+                          Get.to(() => ViewAllOrdersScreen());
+                        },
+                        child: const ReusableTextWidget(
+                          text: 'Go to Inbox',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue,
+                          isUnderText: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -283,7 +325,11 @@ class OnGoingTask extends StatelessWidget {
                   ? null
                   : const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
-              itemCount: controller.todayOrders.length,
+              itemCount: maxItems != null
+                  ? (controller.todayOrders.length > maxItems!
+                      ? maxItems!
+                      : controller.todayOrders.length)
+                  : controller.todayOrders.length,
               itemBuilder: (context, index) {
                 return buildOrderItem(controller.todayOrders[index]);
               },
@@ -294,7 +340,11 @@ class OnGoingTask extends StatelessWidget {
             height: 145,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: controller.todayOrders.length,
+              itemCount: maxItems != null
+                  ? (controller.todayOrders.length > maxItems!
+                      ? maxItems!
+                      : controller.todayOrders.length)
+                  : controller.todayOrders.length,
               itemBuilder: (context, index) {
                 return buildOrderItem(controller.todayOrders[index]);
               },
@@ -323,9 +373,7 @@ class OnGoingTask extends StatelessWidget {
                 propertyImage: order.imageUrls,
                 date: AppUtils.timeStampToDate(
                     order.service?.auditDetails?.createdTime),
-                tenantContactName: (jsonDecode(
-                        (order.service?.additionalDetail ?? '{}').toString())
-                    as Map?)?['household']?['contactNo'],
+                tenantContactName: order.service?.additionalDetail?['household']?['contactNo'],
                 type: AppUtils().getOrderStatus(order),
                 orderID: order.service?.serviceRequestId ?? '',
                 tenantLatitude:

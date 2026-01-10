@@ -25,7 +25,7 @@ import '../model/response/book_service/pgr_create_response.dart';
 import '../widgets/thumbnail_collage.dart';
 import 'all_properties_dart.dart';
 import 'book_your_service.dart';
-import 'order_status_screen.dart';
+import 'view_all_orders_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
@@ -202,7 +202,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 body: Padding(
-                  padding: EdgeInsets.only(left: 2.h, right: 2.h, top: 2.h),
+                  padding: EdgeInsets.all(8.0),
                   child: SingleChildScrollView(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
@@ -217,16 +217,35 @@ class HomeScreen extends StatelessWidget {
                           height: 1.h,
                         ),
                         SizedBox(height: 120, child: CategoriesTypeWidget()),
-                        const ReusableTextWidget(
-                          text: 'Ongoing Task',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+                        Row(
+                          children: [
+                            const ReusableTextWidget(
+                              text: 'Ongoing Task',
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            const Spacer(),
+                            InkWell(
+                              onTap: () {
+                                Get.to(() => ViewAllOrdersScreen());
+                              },
+                              child: (controller.createdOrders.isNotEmpty)
+                                  ? const ReusableTextWidget(
+                                      text: 'View All',
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      isUnderText: TextDecoration.underline,
+                                    )
+                                  : const SizedBox(),
+                            ),
+                          ],
                         ),
                         SizedBox(
                           height: 1.h,
                         ),
                         OnGoingTask(
-                          status: 'created', //'accepted'
+                          status: 'created',
+                          maxItems: 5,
                         ),
                         SizedBox(
                           height: 2.5.h,
@@ -637,12 +656,14 @@ class OnGoingTask extends StatelessWidget {
   final bool isVerticalScrollable;
   final bool isForStatusScreen;
   final String status;
+  final int? maxItems;
 
   OnGoingTask({
     super.key,
     this.isVerticalScrollable = false,
     this.isForStatusScreen = false,
     this.status = '',
+    this.maxItems,
   });
 
   final HomeScreenController homeScreenController =
@@ -697,7 +718,11 @@ class OnGoingTask extends StatelessWidget {
                   ? null
                   : const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
-              itemCount: controller.createdOrders.length,
+              itemCount: maxItems != null
+                  ? (controller.createdOrders.length > maxItems!
+                      ? maxItems!
+                      : controller.createdOrders.length)
+                  : controller.createdOrders.length,
               itemBuilder: (context, index) {
                 return buildOrderItem(controller.createdOrders[index]);
               },
@@ -796,10 +821,28 @@ class OnGoingTask extends StatelessWidget {
             if (controller.todayOrders.isEmpty) {
               return SizedBox(
                 height: Get.height * 0.6,
-                child: const Center(
-                  child: ReusableTextWidget(
-                    text: 'No Orders Found for Today ☹',
-                    fontSize: 15,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const ReusableTextWidget(
+                        text: 'No Orders Found for Today ☹',
+                        fontSize: 15,
+                      ),
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: () {
+                          Get.to(() => ViewAllOrdersScreen());
+                        },
+                        child: const ReusableTextWidget(
+                          text: 'Go to Inbox',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue,
+                          isUnderText: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -832,8 +875,11 @@ class OnGoingTask extends StatelessWidget {
             height: MediaQuery.of(context).size.height / 4,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: controller
-                  .createdOrders.length, // controller.acceptedOrders.length,
+              itemCount: maxItems != null
+                  ? (controller.createdOrders.length > maxItems!
+                      ? maxItems!
+                      : controller.createdOrders.length)
+                  : controller.createdOrders.length,
               itemBuilder: (context, index) {
                 return buildOrderItem(controller.createdOrders[
                     index]); // buildOrderItem(controller.acceptedOrders[index]);
@@ -865,9 +911,7 @@ class OnGoingTask extends StatelessWidget {
                     : [ImageAssetsConst.sampleRoomPage],
                 date: AppUtils.timeStampToDate(
                     order.service?.auditDetails?.createdTime),
-                tenantContactName: (jsonDecode(
-                        (order.service?.additionalDetail ?? '{}').toString())
-                    as Map?)?['household']?['contactNo'],
+                tenantContactName: order.service?.additionalDetail?['household']?['contactNo'],
                 type: AppUtils().getOrderStatus(order),
                 orderID: order.service?.serviceRequestId ?? '',
                 tenantLatitude:
@@ -1179,7 +1223,7 @@ BoxDecoration _getDecorationBasedOnStatus(String? status) {
 
 List<Widget> _widgetOptionsNearle() => <Widget>[
       HomeScreen(),
-      OrderStatusScreen(),
+      ViewAllOrdersScreen(isFromNavigation: true),
       const OngoingTaskScreen(),
       Profile(),
     ];

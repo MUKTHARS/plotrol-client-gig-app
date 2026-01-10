@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:plotrol/controller/bottom_navigation_controller.dart';
 import 'package:plotrol/view/home_screen.dart';
-import 'package:plotrol/view/order_status_screen.dart';
+import 'package:plotrol/view/view_all_orders_screen.dart';
 import 'package:plotrol/view/profile.dart';
 
 import 'add_your_properties.dart';
@@ -94,7 +94,7 @@ class HomeView extends StatelessWidget {
 
   List<Widget> _widgetOptionsNearle() => <Widget>[
         HomeScreen(),
-        OrderStatusScreen(),
+        ViewAllOrdersScreen(isFromNavigation: true),
         AddYourProperties(),
         Profile(),
       ];

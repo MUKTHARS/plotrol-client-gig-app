@@ -4,7 +4,7 @@ import 'package:plotrol/view/gig_views/gig_home_screen.dart';
 
 import '../../controller/bottom_navigation_controller.dart';
 import '../ongoing_task.dart';
-import '../order_status_screen.dart';
+import '../view_all_orders_screen.dart';
 import '../profile.dart';
 
 class GigHomeView extends StatelessWidget {
@@ -80,7 +80,7 @@ class GigHomeView extends StatelessWidget {
 
   List<Widget> _widgetOptionsNearle() => <Widget>[
         GigHomeScreen(),
-        OrderStatusScreen(),
+        ViewAllOrdersScreen(isFromNavigation: false, backButton: false),
         const OngoingTaskScreen(),
         Profile(),
       ];

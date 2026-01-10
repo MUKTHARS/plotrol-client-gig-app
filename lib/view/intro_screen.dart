@@ -24,7 +24,8 @@ class OnBoardPage extends StatelessWidget {
             title: const Text(''),
             backgroundColor: Colors.white,
           ),
-          body: SingleChildScrollView(
+          body: SafeArea(
+            child: SingleChildScrollView(
             child: Column(
               children: [
                 Row(
@@ -115,28 +116,31 @@ class OnBoardPage extends StatelessWidget {
                 SizedBox(height: 4.h,),
               ],
             ),
+            ),
           ),
-          bottomNavigationBar:  Padding(
-            padding: EdgeInsets.only(left: 2.h, right: 2.h, bottom: 1.h),
-            child: Row(
-              children: [
-                Expanded(
-                  child: RoundedLoadingButton(
-                    color: Colors.black,
-                    controller: authenticationController.introBtnController,
-                    onPressed: () {
-                      authenticationController.introBtnController.reset();
-                      Get.to(() => WelcomeLogin());
-                    },
-                    borderRadius: 10,
-                    child: const ReusableTextWidget(
-                      text: 'Get Started',
-                      color: Colors.white,
-                      fontSize: 15,
+          bottomNavigationBar: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.only(left: 2.h, right: 2.h, bottom: 1.h),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: RoundedLoadingButton(
+                      color: Colors.black,
+                      controller: authenticationController.introBtnController,
+                      onPressed: () {
+                        authenticationController.introBtnController.reset();
+                        Get.to(() => WelcomeLogin());
+                      },
+                      borderRadius: 10,
+                      child: const ReusableTextWidget(
+                        text: 'Get Started',
+                        color: Colors.white,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

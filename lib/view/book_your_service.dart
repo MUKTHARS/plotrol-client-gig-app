@@ -80,9 +80,10 @@ class BookYourService extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            body: Padding(
-              padding: const EdgeInsets.all(14),
-              child: SingleChildScrollView(
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: SingleChildScrollView(
                 child: Sizer(
                   builder: (BuildContext context, Orientation orientation,
                       deviceType) {
@@ -329,8 +330,10 @@ class BookYourService extends StatelessWidget {
                   },
                 ),
               ),
+              ),
             ),
-            bottomNavigationBar: Padding(
+            bottomNavigationBar: SafeArea(
+              child: Padding(
               padding: const EdgeInsets.all(14),
               child: RoundedLoadingButton(
                 width: Get.width,
@@ -352,6 +355,7 @@ class BookYourService extends StatelessWidget {
                   color: Colors.white,
                   fontSize: 16,
                 ),
+              ),
               ),
             ),
           ),

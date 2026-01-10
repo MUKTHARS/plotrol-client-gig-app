@@ -252,9 +252,10 @@ class BookYourServiceController extends GetxController {
             source: "web",
             tenantId: tenantId,
             user: user,
-            additionalDetail: jsonEncode({
-              "household": householdDetail
-            }),
+            additionalDetail: {
+              "household": householdDetail,
+              "appSource": "PLOTROL"
+            },
             address: Address(
               tenantId: household.address?.tenantId,
               doorNo: household.address?.doorNo,

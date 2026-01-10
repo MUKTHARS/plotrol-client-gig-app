@@ -19,7 +19,8 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: GetBuilder<AuthenticationController>(
+      body: SafeArea(
+        child: GetBuilder<AuthenticationController>(
         builder: (controller) {
           return Sizer(
             builder: (context, orientation, screenType) {
@@ -239,36 +240,39 @@ class LoginScreen extends StatelessWidget {
             },
           );
         }
+        ),
       ),
-      bottomNavigationBar:  Row(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 2.h,
-                right: 2.h,
-                bottom: 2.h,
-              ),
-              child: RoundedLoadingButton(
-                width: Get.width,
-                color: Colors.black,
-                controller: authenticationController.btnController,
-                onPressed: () {
-                  authenticationController.loginScreenValidation(
-                      authenticationController.mobileController.text,
-                      context
-                  );
-                },
-                borderRadius: 10,
-                child: const ReusableTextWidget(
-                  text: ConstUiStrings.continueText,
-                  color: Colors.white,
-                  fontSize: 15,
+      bottomNavigationBar: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 2.h,
+                  right: 2.h,
+                  bottom: 2.h,
+                ),
+                child: RoundedLoadingButton(
+                  width: Get.width,
+                  color: Colors.black,
+                  controller: authenticationController.btnController,
+                  onPressed: () {
+                    authenticationController.loginScreenValidation(
+                        authenticationController.mobileController.text,
+                        context
+                    );
+                  },
+                  borderRadius: 10,
+                  child: const ReusableTextWidget(
+                    text: ConstUiStrings.continueText,
+                    color: Colors.white,
+                    fontSize: 15,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

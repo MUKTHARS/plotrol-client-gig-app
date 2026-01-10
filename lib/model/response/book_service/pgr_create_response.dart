@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:plotrol/model/response/autentication_response/autentication_response.dart';
 
 import '../common_models.dart';
@@ -84,7 +86,7 @@ class Service {
   String? description;
   String? accountId;
   int? rating;
-  String? additionalDetail;
+  Map<String, dynamic>? additionalDetail;
   String? applicationStatus;
   String? source;
   Address? address;
@@ -105,7 +107,30 @@ class Service {
     description = json['description'];
     accountId = json['accountId'];
     rating = json['rating'];
-    additionalDetail = json['additionalDetail'];
+
+    // Handle additionalDetail - can be String (from API) or Map (already parsed)
+    if (json['additionalDetail'] != null) {
+      if (json['additionalDetail'] is String) {
+        // If API returns string, try to parse it as JSON
+        try {
+          final parsed = jsonDecode(json['additionalDetail']);
+          additionalDetail = (parsed is Map)
+            ? Map<String, dynamic>.from(parsed)
+            : null;
+        } catch (e) {
+          print('Failed to parse additionalDetail: $e');
+          additionalDetail = null;
+        }
+      } else if (json['additionalDetail'] is Map) {
+        // If already a Map, cast it
+        additionalDetail = Map<String, dynamic>.from(json['additionalDetail']);
+      } else {
+        additionalDetail = null;
+      }
+    } else {
+      additionalDetail = null;
+    }
+
     applicationStatus = json['applicationStatus'];
     source = json['source'];
     address = json['address'] != null ? Address.fromJson(json['address']) : null;

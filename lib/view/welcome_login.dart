@@ -21,7 +21,8 @@ class WelcomeLogin extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Sizer(
+      body: SafeArea(
+        child: Sizer(
         builder: (context, orientation, screenType) {
           return Center(
             child: Padding(
@@ -132,6 +133,7 @@ class WelcomeLogin extends StatelessWidget {
             ),
           );
         },
+        ),
       ),
       bottomNavigationBar:  SizedBox.shrink(),
     );

@@ -78,10 +78,8 @@ class OrderDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic> additionalDetailMap =
-        (order.service!.additionalDetail != null &&
-                order.service!.additionalDetail!.isNotEmpty)
-            ? Map<String, dynamic>.from(
-                jsonDecode(order.service!.additionalDetail.toString()))
+        order.service!.additionalDetail != null
+            ? Map<String, dynamic>.from(order.service!.additionalDetail!)
             : {};
     return GetBuilder<OrderDetailsController>(initState: (_) {
       orderDetailsController.getCheckList();
@@ -951,7 +949,8 @@ class OrderDetailScreen extends StatelessWidget {
               ),
             );
           }),
-          bottomNavigationBar: SizedBox(
+          bottomNavigationBar: SafeArea(
+            child: SizedBox(
             child: Padding(
               padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
               child: RoundedLoadingButton(
@@ -974,6 +973,7 @@ class OrderDetailScreen extends StatelessWidget {
                   fontSize: 16,
                 ),
               ),
+            ),
             ),
           ),
         ),
