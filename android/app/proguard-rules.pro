@@ -13,3 +13,6 @@
 -keepclasseswithmembers class * {
   public void onPayment*(...);
 }
+-dontwarn com.google.android.play.core.splitcompat.SplitCompatApplication
+-dontwarn io.flutter.app.FlutterPlayStoreSplitApplication
+-dontwarn io.flutter.embedding.engine.deferredcomponents.**

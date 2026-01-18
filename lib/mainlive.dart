@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:device_info_plus/device_info_plus.dart';
+// import 'package:device_info_plus/device_info_plus.dart';
 // import 'package:firebase_core/firebase_core.dart';
 // import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // import 'package:flutter_app_version_checker/flutter_app_version_checker.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:plotrol/helper/api_constants.dart';
 import 'package:plotrol/view/main_screen.dart';
@@ -25,22 +25,22 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-AndroidNotificationChannel channel = const AndroidNotificationChannel(
-  'Plotrol', // id
-  'Plotrol Notifications', // title
-  description: 'Plotrol', // description
-  importance: Importance.high,
-  sound: RawResourceAndroidNotificationSound('ring'),
-  enableLights: true,
-  enableVibration: true,
-  playSound: true,
-  showBadge: true,
-  // vibrationPattern:Int64List.fromList([500, 1000, 500]),
-);
+// AndroidNotificationChannel channel = const AndroidNotificationChannel(
+//   'Plotrol', // id
+//   'Plotrol Notifications', // title
+//   description: 'Plotrol', // description
+//   importance: Importance.high,
+//   sound: RawResourceAndroidNotificationSound('ring'),
+//   enableLights: true,
+//   enableVibration: true,
+//   playSound: true,
+//   showBadge: true,
+//   // vibrationPattern:Int64List.fromList([500, 1000, 500]),
+// );
 
-// final instance = FirebaseMessaging.instance;
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
+// // final instance = FirebaseMessaging.instance;
+// final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+//     FlutterLocalNotificationsPlugin();
 
 void main() async {
   CheckInternetConnectivity.init();
@@ -99,7 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     getUserDetails();
     // fcmToken();
-    getId();
+    // getId();
     // LocalNotificationService.initialize(context);
     // checkVersion();
     super.initState();
@@ -120,27 +120,27 @@ class _MyHomePageState extends State<MyHomePage> {
     //     );
   }
 
-  Future<String?> getId() async {
-    var deviceInfo = DeviceInfoPlugin();
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (Platform.isIOS) {
-      iosDeviceInfo = await deviceInfo.iosInfo;
-      deviceId = iosDeviceInfo.toMap().toString();
-      uniqueDeviceId = iosDeviceInfo.id;
-      prefs.setString('deviceId ', uniqueDeviceId!);
-      print('iosDeviceInfodeviceId $deviceId');
-      print('uniqueDeviceId ${prefs.getString('deviceId')}');
-      // return iosDeviceInfo.identifierForVendor; // Unique ID on iOS
-    } else {
-      androidDeviceInfo = await deviceInfo.androidInfo;
-      deviceId = androidDeviceInfo.toMap().toString();
-      uniqueDeviceId = androidDeviceInfo.id;
-      prefs.setString('deviceId', uniqueDeviceId!);
-      print('androidDeviceInfodeviceId$deviceId');
-      print('uniqueDeviceId${prefs.getString('deviceId')}');
-    }
-    return null;
-  }
+  // Future<String?> getId() async {
+  //   var deviceInfo = DeviceInfoPlugin();
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   if (Platform.isIOS) {
+  //     iosDeviceInfo = await deviceInfo.iosInfo;
+  //     deviceId = iosDeviceInfo.toMap().toString();
+  //     uniqueDeviceId = iosDeviceInfo.id;
+  //     prefs.setString('deviceId ', uniqueDeviceId!);
+  //     print('iosDeviceInfodeviceId $deviceId');
+  //     print('uniqueDeviceId ${prefs.getString('deviceId')}');
+  //     // return iosDeviceInfo.identifierForVendor; // Unique ID on iOS
+  //   } else {
+  //     androidDeviceInfo = await deviceInfo.androidInfo;
+  //     deviceId = androidDeviceInfo.toMap().toString();
+  //     uniqueDeviceId = androidDeviceInfo.id;
+  //     prefs.setString('deviceId', uniqueDeviceId!);
+  //     print('androidDeviceInfodeviceId$deviceId');
+  //     print('uniqueDeviceId${prefs.getString('deviceId')}');
+  //   }
+  //   return null;
+  // }
 
   // fcmToken() async {
   //   SharedPreferences prefs = await SharedPreferences.getInstance();

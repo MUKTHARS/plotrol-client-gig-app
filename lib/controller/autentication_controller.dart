@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'dart:math';
 
 import 'package:country_currency_pickers/country.dart';
@@ -16,17 +15,13 @@ import 'package:plotrol/helper/const_assets_const.dart';
 import 'package:plotrol/helper/utils.dart';
 import 'package:plotrol/model/request/autentication_request/autentication_request.dart';
 import 'package:plotrol/model/response/autentication_response/autentication_response.dart';
-import 'package:plotrol/model/response/household_member/household_member_response.dart';
 import 'package:plotrol/model/response/individual/individual_response.dart';
 import 'package:plotrol/view/gig_views/gig_home_view.dart';
-import 'package:plotrol/view/home_screen.dart';
 import 'package:plotrol/view/main_screen.dart';
 import 'package:plotrol/view/otp_screen.dart';
 import 'package:rounded_loading_button_plus/rounded_loading_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
-import '../Helper/Logger.dart';
 import '../globalWidgets/flutter_toast.dart';
 
 class AuthenticationController extends GetxController {
@@ -48,11 +43,12 @@ class AuthenticationController extends GetxController {
 
   TextEditingController otpController = TextEditingController();
 
-  WebViewController webViewController = WebViewController();
+  // WebViewController webViewController = WebViewController();
 
   LoginRepository loginRepository = LoginRepository();
 
-  GetHouseholdMemberRepository householdMemberRepository = GetHouseholdMemberRepository();
+  GetHouseholdMemberRepository householdMemberRepository =
+      GetHouseholdMemberRepository();
 
   // FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 
@@ -104,8 +100,7 @@ class AuthenticationController extends GetxController {
     if (mobileController.text.isEmpty) {
       Toast.showToast('Please Enter the Mobile Number');
       btnController.reset();
-    }
-    else if  (otpController.text.isEmpty) {
+    } else if (otpController.text.isEmpty) {
       Toast.showToast('Please Enter the Password');
       btnController.reset();
     }
@@ -147,7 +142,7 @@ class AuthenticationController extends GetxController {
     LoginResponse? result = await loginRepository.signIn(data);
 
     if (result?.accessToken != null) {
-      firstName = (result?.userRequest?.name ?? ' ').obs ;
+      firstName = (result?.userRequest?.name ?? ' ').obs;
       // Store access token in SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString('access_token', result!.accessToken!);
@@ -157,52 +152,57 @@ class AuthenticationController extends GetxController {
       prefs.setString('uuid', result.userRequest?.uuid ?? '');
       prefs.setString('userName', result.userRequest?.userName ?? '');
       prefs.setString('name', result.userRequest?.name ?? '');
-      prefs.setString(
-          'mobileNumber', result.userRequest?.mobileNumber ?? '');
+      prefs.setString('mobileNumber', result.userRequest?.mobileNumber ?? '');
       prefs.setString('emailId', result.userRequest?.emailId ?? '');
       prefs.setString('type', result.userRequest?.type ?? '');
       prefs.setString('tenantId', result.userRequest?.tenantId ?? '');
       prefs.setString('tenantImage', ImageAssetsConst.profileIcon);
-      bool isDistributor = AppUtils().checkIsHousehold(result.userRequest?.roles ?? []);
-      bool isPGRAdmin = AppUtils().checkIsPGRAdmin(result.userRequest?.roles ?? []);
+      bool isDistributor =
+          AppUtils().checkIsHousehold(result.userRequest?.roles ?? []);
+      bool isPGRAdmin =
+          AppUtils().checkIsPGRAdmin(result.userRequest?.roles ?? []);
 
-      if( isDistributor && !isPGRAdmin) {
-        IndividualsResponse? individualsResponse = await loginRepository
-            .getIndividual({
+      if (isDistributor && !isPGRAdmin) {
+        IndividualsResponse? individualsResponse =
+            await loginRepository.getIndividual({
           "Individual": {
-            "mobileNumber": result.userRequest?.mobileNumber != null ? [
-              result.userRequest?.mobileNumber
-            ] : null
+            "mobileNumber": result.userRequest?.mobileNumber != null
+                ? [result.userRequest?.mobileNumber]
+                : null
           }
         }, result.userRequest?.toJson());
         // Store user details
         if (individualsResponse != null) {
           final loggedInIndividual = individualsResponse.individuals;
-          prefs.setString('individualId', loggedInIndividual
-              ?.where((i) => i.userUuid != null)
-              .first
-              .id ?? '');
-          prefs.setString('userUuid', loggedInIndividual
-              ?.where((i) => i.userUuid != null)
-              .first
-              .userUuid ?? '');
-          prefs.setString('defaultBoundaryCode', loggedInIndividual
-              ?.where((i) => i.userUuid != null)
-              .first
-              .address
-              ?.first
-              .locality
-              ?.code ?? '');
+          prefs.setString(
+              'individualId',
+              loggedInIndividual?.where((i) => i.userUuid != null).first.id ??
+                  '');
+          prefs.setString(
+              'userUuid',
+              loggedInIndividual
+                      ?.where((i) => i.userUuid != null)
+                      .first
+                      .userUuid ??
+                  '');
+          prefs.setString(
+              'defaultBoundaryCode',
+              loggedInIndividual
+                      ?.where((i) => i.userUuid != null)
+                      .first
+                      .address
+                      ?.first
+                      .locality
+                      ?.code ??
+                  '');
         }
-      }
-      else {
+      } else {
         prefs.setString('userInfo', jsonEncode(result.userRequest?.toJson()));
         prefs.setInt('userId', result.userRequest?.id ?? 0);
         prefs.setString('userUuid', result.userRequest?.uuid ?? '');
         prefs.setString('userName', result.userRequest?.userName ?? '');
         prefs.setString('name', result.userRequest?.name ?? '');
-        prefs.setString(
-            'mobileNumber', result.userRequest?.mobileNumber ?? '');
+        prefs.setString('mobileNumber', result.userRequest?.mobileNumber ?? '');
         prefs.setString('emailId', result.userRequest?.emailId ?? '');
         prefs.setString('type', result.userRequest?.type ?? '');
         prefs.setString('tenantId', result.userRequest?.tenantId ?? '');
@@ -213,7 +213,9 @@ class AuthenticationController extends GetxController {
       logInStatus.value = true;
 
       // Navigate to HomeScreen after successful login
-      Get.offAll(() => isDistributor && !isPGRAdmin ? HomeView(selectedIndex: 0) : GigHomeView(selectedIndex: 0));
+      Get.offAll(() => isDistributor && !isPGRAdmin
+          ? HomeView(selectedIndex: 0)
+          : GigHomeView(selectedIndex: 0));
     } else {
       // Handle login failure
       final snackBar = const SnackBar(
@@ -228,13 +230,12 @@ class AuthenticationController extends GetxController {
   }
 
   updateHouseDetails() async {
-      // Set values in the application state
-      authMode.value = 1; // Assuming 1 means authenticated
-      logInStatus.value = true;
+    // Set values in the application state
+    authMode.value = 1; // Assuming 1 means authenticated
+    logInStatus.value = true;
 
-      // Navigate to HomeScreen after successful login
-      Get.offAll(() => HomeView(selectedIndex: 0));
-
+    // Navigate to HomeScreen after successful login
+    Get.offAll(() => HomeView(selectedIndex: 0));
   }
 
   // signInResult(LoginRequest data, context) async {

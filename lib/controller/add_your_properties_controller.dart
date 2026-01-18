@@ -3,17 +3,13 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:dio/dio.dart' as dio;
-import 'package:get/get_connect/http/src/multipart/form_data.dart' as getForm;
-import 'package:dospace/dospace.dart' as dospace;
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
-import 'package:path/path.dart' as path;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:plotrol/controller/autentication_controller.dart';
 import 'package:plotrol/data/repository/add_household_member/add_household_member_repository.dart';
@@ -35,7 +31,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Helper/Logger.dart';
 import '../globalWidgets/Googleplaces.dart';
-import '../model/request/adding_properties_request/adding_properties_request.dart';
 import '../model/response/book_service/file_store_model.dart';
 import '../view/main_screen.dart';
 import '../widgets/location_map.dart';
@@ -74,7 +69,8 @@ class AddYourPropertiesController extends GetxController {
 
   AddPropertiesRepository addPropertiesRepository = AddPropertiesRepository();
   AddIndividualRepository addIndividualRepository = AddIndividualRepository();
-  AddHouseholdMemberRepository addHouseholdMemberRepository = AddHouseholdMemberRepository();
+  AddHouseholdMemberRepository addHouseholdMemberRepository =
+      AddHouseholdMemberRepository();
 
   RxInt tenantId = 0.obs;
 
@@ -130,7 +126,6 @@ class AddYourPropertiesController extends GetxController {
 
   int _remainingSlots() => max(0, kMaxPhotos - (images?.length ?? 0));
 
-
   Future<bool> _ensureGalleryPerms() async {
     // Check current status first
     final status = await Permission.photos.status;
@@ -163,17 +158,18 @@ class AddYourPropertiesController extends GetxController {
 
     return false;
   }
+
   Future<bool> _ensureCameraPerms() async {
     final status = await Permission.camera.request();
     return status.isGranted;
   }
 
   Future<void> getImageFromGallery() async {
-    if (!await _ensureGalleryPerms()) {
-      Toast.showToast('Please allow Photos permission in Settings');
-      openAppSettings();
-      return;
-    }
+    // if (!await _ensureGalleryPerms()) {
+    //   Toast.showToast('Please allow Photos permission in Settings');
+    //   openAppSettings();
+    //   return;
+    // }
 
     if (!_canAddMorePhotos()) return;
 
@@ -204,7 +200,6 @@ class AddYourPropertiesController extends GetxController {
     update();
   }
 
-
   Future<void> getImageFromCamera() async {
     if (!await _ensureCameraPerms()) {
       Toast.showToast('Please allow Camera permission in Settings');
@@ -214,7 +209,8 @@ class AddYourPropertiesController extends GetxController {
 
     if (!_canAddMorePhotos()) return;
 
-    final x = await _picker.pickImage(source: ImageSource.camera, imageQuality: 90);
+    final x =
+        await _picker.pickImage(source: ImageSource.camera, imageQuality: 90);
     if (x == null) return;
 
     images!.add(x);
@@ -233,14 +229,13 @@ class AddYourPropertiesController extends GetxController {
     update();
   }
 
-
-
   Future getImageList() async {
     if (!_canAddMorePhotos()) return;
 
     final allowed = _remainingSlots();
     // This legacy method was using limit:1 — keep behavior but still respect remaining
-    final List<XFile> selectedImages = await _picker.pickMultiImage(limit: min(1, allowed), imageQuality: 90);
+    final List<XFile> selectedImages =
+        await _picker.pickMultiImage(limit: min(1, allowed), imageQuality: 90);
 
     if (selectedImages.isEmpty) return;
 
@@ -249,9 +244,11 @@ class AddYourPropertiesController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     final accessToken = prefs.getString('access_token');
 
-    final fileStoreIds = await uploadPickedImages(selectedImages, 'pgr', accessToken!);
+    final fileStoreIds =
+        await uploadPickedImages(selectedImages, 'pgr', accessToken!);
     if (fileStoreIds.isNotEmpty) {
-      uploadedImageList.addAll(fileStoreIds.map((f) => f.fileStoreId.toString()));
+      uploadedImageList
+          .addAll(fileStoreIds.map((f) => f.fileStoreId.toString()));
     } else {
       images?.clear();
       update();
@@ -261,12 +258,11 @@ class AddYourPropertiesController extends GetxController {
     update();
   }
 
-
   Future<List<FileStoreModel>> uploadPickedImages(
-      List<XFile> xFiles,
-      String moduleName,
-      String authToken,
-      ) async {
+    List<XFile> xFiles,
+    String moduleName,
+    String authToken,
+  ) async {
     final dioClient = dio.Dio();
 
     final List<dio.MultipartFile> fileList = [];
@@ -300,7 +296,8 @@ class AddYourPropertiesController extends GetxController {
     });
 
     print("FormData fields: ${formData.fields}");
-    print("FormData files: ${formData.files.map((entry) => entry.value.filename).toList()}");
+    print(
+        "FormData files: ${formData.files.map((entry) => entry.value.filename).toList()}");
 
     try {
       final response = await dioClient.post(
@@ -321,8 +318,7 @@ class AddYourPropertiesController extends GetxController {
         return (response.data['files'] as List)
             .map<FileStoreModel>((e) => FileStoreModel.fromJson(e))
             .toList();
-      }
-      else{
+      } else {
         Toast.showToast(response.data['Errors'][0]['message']);
       }
     } catch (e, st) {
@@ -331,9 +327,6 @@ class AddYourPropertiesController extends GetxController {
 
     return [];
   }
-
-
-
 
   // Future<List<FileStoreModel>> uploadPickedImages(List<XFile> xFiles, String moduleName, String authToken) async {
   //   var postUri = Uri.parse("${ApiConstants.host}${ApiConstants.fileUpload}");
@@ -368,7 +361,6 @@ class AddYourPropertiesController extends GetxController {
   //   return <FileStoreModel>[];
   // }
 
-
   MediaType getMediaType(String? path) {
     if (path == null) return MediaType('', '');
     String? mimeStr = lookupMimeType(path);
@@ -380,7 +372,6 @@ class AddYourPropertiesController extends GetxController {
     }
   }
 
-
   void removeImageList(int index) {
     if (index >= 0 && index < (images?.length ?? 0)) {
       images?.removeAt(index);
@@ -390,7 +381,6 @@ class AddYourPropertiesController extends GetxController {
     }
     update();
   }
-
 
   // uploadImageAndSave() async {
   //   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -449,7 +439,7 @@ class AddYourPropertiesController extends GetxController {
     //   btnController.reset();
     //   Toast.showToast('Please Enter the Mobile Number');
     // } else
-      if (locationName.text.isEmpty) {
+    if (locationName.text.isEmpty) {
       btnController.reset();
       Toast.showToast('Please Enter the Location Name');
     } else if (locationName.text.length > 25) {
@@ -485,7 +475,8 @@ class AddYourPropertiesController extends GetxController {
       lastModifiedBy: userUuid,
       lastModifiedTime: AppUtils().millisecondsSinceEpoch(),
     );
-    IndividualCreateResponse? individualResponse = await addIndividualRepository.addIndividual(
+    IndividualCreateResponse? individualResponse =
+        await addIndividualRepository.addIndividual(
       Individual(
         clientReferenceId: individualClientReferenceId,
         tenantId: tenantId,
@@ -495,18 +486,19 @@ class AddYourPropertiesController extends GetxController {
         rowVersion: 1,
         address: [
           Address(
-              tenantId: tenantId,
-              type: "CORRESPONDENCE",
-              locality: Locality(
-                  code: "MICROPLAN_MO",
-                  name: cityController.text
-              ),
-              addressLine1: (addressController.text ?? '').length > 20 ? addressController.text.substring(0,20) : addressController.text,
-              addressLine2: (addressController.text ?? '').length > 20 ? addressController.text.substring(20) : null,
-              landmark: locationName.text,
-              city: cityController.text,
-              auditDetails: auditDetails,
-              pincode: postCodeController.text,
+            tenantId: tenantId,
+            type: "CORRESPONDENCE",
+            locality: Locality(code: "MICROPLAN_MO", name: cityController.text),
+            addressLine1: (addressController.text ?? '').length > 20
+                ? addressController.text.substring(0, 20)
+                : addressController.text,
+            addressLine2: (addressController.text ?? '').length > 20
+                ? addressController.text.substring(20)
+                : null,
+            landmark: locationName.text,
+            city: cityController.text,
+            auditDetails: auditDetails,
+            pincode: postCodeController.text,
           )
         ],
         auditDetails: auditDetails,
@@ -525,13 +517,12 @@ class AddYourPropertiesController extends GetxController {
       ),
     );
     HouseholdCreateResponse? result =
-        await addPropertiesRepository.addProperties(
-            Household(
-              clientReferenceId: householdClientReferenceId,
-              householdType: "FAMILY",
-              memberCount: 1,
-              tenantId: tenantId,
-              additionalFields: AdditionalFields(
+        await addPropertiesRepository.addProperties(Household(
+            clientReferenceId: householdClientReferenceId,
+            householdType: "FAMILY",
+            memberCount: 1,
+            tenantId: tenantId,
+            additionalFields: AdditionalFields(
               schema: 'Household',
               version: 1,
               fields: [
@@ -547,55 +538,60 @@ class AddYourPropertiesController extends GetxController {
                   ),
                 if (uploadedImageList.isNotEmpty)
                   AdditionalFieldEntry(
-                    key: 'imageIds',                 // NEW: full list of IDs in one field
+                    key: 'imageIds', // NEW: full list of IDs in one field
                     value: jsonEncode(uploadedImageList),
                   ),
                 if (uploadedImageList.isNotEmpty)
                   ...uploadedImageList.asMap().entries.map(
                         (entry) => AdditionalFieldEntry(
-                      key: 'image_${entry.key + 1}',
-                      value: entry.value,
-                    ),
-                  ),
+                          key: 'image_${entry.key + 1}',
+                          value: entry.value,
+                        ),
+                      ),
               ],
             ),
             rowVersion: 1,
-              nonRecoverableError: false,
-              auditDetails: auditDetails,
-              clientAuditDetails: auditDetails,
-              address: Address(
-                latitude: currentLat.value.isNotEmpty ? double.parse(currentLat.value.toString()) : null,
-                longitude: currentLong.value.isNotEmpty ? double.parse(currentLong.value.toString()) : null,
-                type: "CORRESPONDENCE",
-                tenantId: tenantId,
-                locality: Locality(
-                  code: "MICROPLAN_MO",
-                  name: cityController.text
-                ),
-                buildingName: locationName.text,
-                street: AppUtils().parseAddressFromText(addressController.text ?? '').street,
-                addressLine1: AppUtils().parseAddressFromText(addressController.text ?? '').addressLine1,
-                addressLine2: AppUtils().parseAddressFromText(addressController.text ?? '').addressLine2,
-                landmark: notesController.text,
-                city: cityController.text,
-                pincode: postCodeController.text
-              )
-        ));
-    if (individualResponse?.individual != null && result?.household != null ) {
-      HouseholdMemberCreateResponse? householdMemberResponse = await addHouseholdMemberRepository.addHouseholdMember(
-          HouseholdMember(
-            clientReferenceId: householdMemberClientReferenceId,
-            individualClientReferenceId: individualClientReferenceId,
-            householdClientReferenceId: householdClientReferenceId,
-            isHeadOfHousehold: true,
-            rowVersion: 1,
+            nonRecoverableError: false,
             auditDetails: auditDetails,
             clientAuditDetails: auditDetails,
-            tenantId: tenantId,
-          )
-      );
+            address: Address(
+                latitude: currentLat.value.isNotEmpty
+                    ? double.parse(currentLat.value.toString())
+                    : null,
+                longitude: currentLong.value.isNotEmpty
+                    ? double.parse(currentLong.value.toString())
+                    : null,
+                type: "CORRESPONDENCE",
+                tenantId: tenantId,
+                locality:
+                    Locality(code: "MICROPLAN_MO", name: cityController.text),
+                buildingName: locationName.text,
+                street: AppUtils()
+                    .parseAddressFromText(addressController.text ?? '')
+                    .street,
+                addressLine1: AppUtils()
+                    .parseAddressFromText(addressController.text ?? '')
+                    .addressLine1,
+                addressLine2: AppUtils()
+                    .parseAddressFromText(addressController.text ?? '')
+                    .addressLine2,
+                landmark: notesController.text,
+                city: cityController.text,
+                pincode: postCodeController.text)));
+    if (individualResponse?.individual != null && result?.household != null) {
+      HouseholdMemberCreateResponse? householdMemberResponse =
+          await addHouseholdMemberRepository.addHouseholdMember(HouseholdMember(
+        clientReferenceId: householdMemberClientReferenceId,
+        individualClientReferenceId: individualClientReferenceId,
+        householdClientReferenceId: householdClientReferenceId,
+        isHeadOfHousehold: true,
+        rowVersion: 1,
+        auditDetails: auditDetails,
+        clientAuditDetails: auditDetails,
+        tenantId: tenantId,
+      ));
 
-      if(householdMemberResponse?.householdMember != null){
+      if (householdMemberResponse?.householdMember != null) {
         Get.offAll(() => HomeView(selectedIndex: 0));
         Toast.showToast('Your Properties Added SuccessFully');
         notesController.clear();
@@ -604,8 +600,7 @@ class AddYourPropertiesController extends GetxController {
         locationName.clear();
         uploadedImageList.clear();
         images?.clear();
-      }
-      else {
+      } else {
         Toast.showToast(
             'There is some issue in adding your Properties Please Try Again Later');
       }
@@ -644,23 +639,28 @@ class AddYourPropertiesController extends GetxController {
   }
 
   void showMap(
-    BuildContext context, [bool? showCurrentLocation = true, double? latitude, double? longitude,]
-  ) async {
+    BuildContext context, [
+    bool? showCurrentLocation = true,
+    double? latitude,
+    double? longitude,
+  ]) async {
     Position position = await Geolocator.getCurrentPosition();
-    if(showCurrentLocation == false && (latitude == null || longitude == null)){
+    if (showCurrentLocation == false &&
+        (latitude == null || longitude == null)) {
       Toast.showToast("Unable to get coordinates");
-    }
-    else {
+    } else {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              LocationMap(
-                initialLatitude: (showCurrentLocation ?? true) ? position
-                    .latitude : latitude ?? 0,
-                initialLongitude: (showCurrentLocation ?? true) ? position.longitude : longitude ?? 0,
-                refreshLocation: (showCurrentLocation ?? true) ? getLocation : null,
-              ),
+          builder: (context) => LocationMap(
+            initialLatitude: (showCurrentLocation ?? true)
+                ? position.latitude
+                : latitude ?? 0,
+            initialLongitude: (showCurrentLocation ?? true)
+                ? position.longitude
+                : longitude ?? 0,
+            refreshLocation: (showCurrentLocation ?? true) ? getLocation : null,
+          ),
         ),
       );
     }

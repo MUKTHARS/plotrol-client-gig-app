@@ -1,33 +1,24 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
-import 'dart:math';
 
 import 'package:country_currency_pickers/country.dart';
 import 'package:country_currency_pickers/utils/utils.dart';
 // import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart';
 import 'package:otp_timer_button/otp_timer_button.dart';
 import 'package:plotrol/data/repository/autentication/login_repository.dart';
 import 'package:plotrol/data/repository/get_properties/get_property_member.dart';
-import 'package:plotrol/globalWidgets/text_widget.dart';
 import 'package:plotrol/helper/api_constants.dart';
 import 'package:plotrol/helper/const_assets_const.dart';
 import 'package:plotrol/helper/utils.dart';
 import 'package:plotrol/model/request/autentication_request/autentication_request.dart';
 import 'package:plotrol/model/response/autentication_response/autentication_response.dart';
-import 'package:plotrol/model/response/household_member/household_member_response.dart';
 import 'package:plotrol/model/response/individual/individual_response.dart';
 import 'package:plotrol/view/gig_views/gig_home_view.dart';
-import 'package:plotrol/view/home_screen.dart';
 import 'package:plotrol/view/main_screen.dart';
-import 'package:plotrol/view/otp_screen.dart';
 import 'package:rounded_loading_button_plus/rounded_loading_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
-import '../Helper/Logger.dart';
 import '../globalWidgets/flutter_toast.dart';
 import '../model/response/employee_response/employee_search_response.dart';
 
@@ -46,10 +37,10 @@ class RequesterLoginController extends GetxController {
   RxString password = ''.obs;
 
   final RoundedLoadingButtonController btnController =
-  RoundedLoadingButtonController();
+      RoundedLoadingButtonController();
 
   final RoundedLoadingButtonController introBtnController =
-  RoundedLoadingButtonController();
+      RoundedLoadingButtonController();
 
   OtpTimerButtonController otpTimerController = OtpTimerButtonController();
 
@@ -61,11 +52,12 @@ class RequesterLoginController extends GetxController {
 
   TextEditingController otpController = TextEditingController();
 
-  WebViewController webViewController = WebViewController();
+  // WebViewController webViewController = WebViewController();
 
   LoginRepository loginRepository = LoginRepository();
 
-  GetHouseholdMemberRepository householdMemberRepository = GetHouseholdMemberRepository();
+  GetHouseholdMemberRepository householdMemberRepository =
+      GetHouseholdMemberRepository();
 
   // FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 
@@ -111,8 +103,8 @@ class RequesterLoginController extends GetxController {
   }
 
   void togglePasswordVisibility() {
-      isPasswordVisible.value = !isPasswordVisible.value;
-      update();
+    isPasswordVisible.value = !isPasswordVisible.value;
+    update();
   }
 
   void toggleConfirmPasswordVisibility() {
@@ -130,33 +122,29 @@ class RequesterLoginController extends GetxController {
 
   /// login screen validation using the mobile number and the Terms and conditions checkbox
   void loginScreenValidation(mobile, context) {
-    final passwordRegex = RegExp(r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%])(?=\S+$).{8,15}$');
+    final passwordRegex =
+        RegExp(r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%])(?=\S+$).{8,15}$');
     if (mobileController.text.isEmpty) {
       Toast.showToast('Please Enter the Mobile Number');
       btnController.reset();
-    }
-    else if  (mobileController.text.length < 10) {
+    } else if (mobileController.text.length < 10) {
       Toast.showToast('Please Enter a 10 digit valid phone number');
       btnController.reset();
-    }
-
-    else if(nameController.text.trim().isEmpty){
+    } else if (nameController.text.trim().isEmpty) {
       Toast.showToast('Please Enter a valid name');
       btnController.reset();
-    }
-    else if(passwordController.text.trim().isEmpty){
+    } else if (passwordController.text.trim().isEmpty) {
       Toast.showToast('Please enter the password for your account');
       btnController.reset();
-    }
-    else if(!passwordRegex.hasMatch(passwordController.text)){
-      Toast.showToast('Password must be 8-15 chars, include upper, lower, digit, and @#\$%');
+    } else if (!passwordRegex.hasMatch(passwordController.text)) {
+      Toast.showToast(
+          'Password must be 8-15 chars, include upper, lower, digit, and @#\$%');
       btnController.reset();
-    }
-    else if(confirmPasswordController.text.trim().isEmpty ){
+    } else if (confirmPasswordController.text.trim().isEmpty) {
       Toast.showToast('Passwords do not match');
       btnController.reset();
-    }
-    else if((passwordController.text.trim() != confirmPasswordController.text.trim())){
+    } else if ((passwordController.text.trim() !=
+        confirmPasswordController.text.trim())) {
       Toast.showToast('Passwords do not match');
       btnController.reset();
     }
@@ -187,43 +175,39 @@ class RequesterLoginController extends GetxController {
     final millisecondsSinceEpoch18Years = date18YearsAgo.millisecondsSinceEpoch;
     signInResult(
       Employee(
-        code: mobileController.text.trim(),
-        tenantId: 'mz',
-        dateOfAppointment: AppUtils().millisecondsSinceEpoch(),
-        employeeStatus: "EMPLOYED",
-        employeeType: "PERMANENT",
-        assignments: [
-          Assignment(
-            fromDate: AppUtils().millisecondsSinceEpoch(),
-            isCurrentAssignment: true,
-            department: "OTHER",
-            designation: "DESIG_23",
-          )
-        ],
-        jurisdictions: [
-          Jurisdiction(
-            hierarchy: "MICROPLAN",
-            boundary: "MICROPLAN_MO",
-            boundaryType: "COUNTRY",
-            tenantId: "mz"
-          )
-        ],
-        user: UserRequest(
-          dob: millisecondsSinceEpoch18Years,
-          mobileNumber: mobileController.text.trim(),
-          name: nameController.text.trim(),
-          password: passwordController.text.trim(),
-          tenantId: ApiConstants.tenantId,
-          userName: mobileController.text.trim(),
-          roles: [
-            Role(
-                code: 'DISTRIBUTOR',
-                name: 'Distributor',
-                tenantId: ApiConstants.tenantId
+          code: mobileController.text.trim(),
+          tenantId: 'mz',
+          dateOfAppointment: AppUtils().millisecondsSinceEpoch(),
+          employeeStatus: "EMPLOYED",
+          employeeType: "PERMANENT",
+          assignments: [
+            Assignment(
+              fromDate: AppUtils().millisecondsSinceEpoch(),
+              isCurrentAssignment: true,
+              department: "OTHER",
+              designation: "DESIG_23",
             )
-          ]
-        )
-      ),
+          ],
+          jurisdictions: [
+            Jurisdiction(
+                hierarchy: "MICROPLAN",
+                boundary: "MICROPLAN_MO",
+                boundaryType: "COUNTRY",
+                tenantId: "mz")
+          ],
+          user: UserRequest(
+              dob: millisecondsSinceEpoch18Years,
+              mobileNumber: mobileController.text.trim(),
+              name: nameController.text.trim(),
+              password: passwordController.text.trim(),
+              tenantId: ApiConstants.tenantId,
+              userName: mobileController.text.trim(),
+              roles: [
+                Role(
+                    code: 'DISTRIBUTOR',
+                    name: 'Distributor',
+                    tenantId: ApiConstants.tenantId)
+              ])),
       context,
     );
   }
@@ -232,22 +216,22 @@ class RequesterLoginController extends GetxController {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int loginAttempt = prefs.getInt('loginAttempts') ?? loginAttempts.value;
     prefs.setInt('loginAttempts', loginAttempt);
-    if(loginAttempt <= 3) {
+    if (loginAttempt <= 3) {
       EmployeeResponse? result = await loginRepository.createRequester({
-        'Employees': [
-          data.toJson()
-        ]
+        'Employees': [data.toJson()]
       });
       loginAttempts.value = loginAttempts.value + 1;
       if (result?.employees.first.code != null) {
-        LoginResponse? loginResult = await loginRepository.signIn(LoginRequest(
-          username: mobileController.text,
-          password: passwordController.text,
-          tenantId: ApiConstants.tenantId,
-          grant_type: 'password',
-          scope: 'read',
-          userType: 'EMPLOYEE',
-        ),);
+        LoginResponse? loginResult = await loginRepository.signIn(
+          LoginRequest(
+            username: mobileController.text,
+            password: passwordController.text,
+            tenantId: ApiConstants.tenantId,
+            grant_type: 'password',
+            scope: 'read',
+            userType: 'EMPLOYEE',
+          ),
+        );
 
         if (loginResult?.accessToken != null) {
           firstName = (loginResult?.userRequest?.name ?? ' ').obs;
@@ -266,43 +250,49 @@ class RequesterLoginController extends GetxController {
           prefs.setString('type', loginResult.userRequest?.type ?? '');
           prefs.setString('tenantId', loginResult.userRequest?.tenantId ?? '');
           prefs.setString('tenantImage', ImageAssetsConst.profileIcon);
-          bool isDistributor = AppUtils().checkIsHousehold(
-              loginResult.userRequest?.roles ?? []);
-          bool isPGRAdmin = AppUtils().checkIsPGRAdmin(
-              loginResult.userRequest?.roles ?? []);
+          bool isDistributor =
+              AppUtils().checkIsHousehold(loginResult.userRequest?.roles ?? []);
+          bool isPGRAdmin =
+              AppUtils().checkIsPGRAdmin(loginResult.userRequest?.roles ?? []);
 
           if (isDistributor && !isPGRAdmin) {
-            IndividualsResponse? individualsResponse = await loginRepository
-                .getIndividual({
+            IndividualsResponse? individualsResponse =
+                await loginRepository.getIndividual({
               "Individual": {
                 "mobileNumber": loginResult.userRequest?.mobileNumber != null
-                    ? [
-                  loginResult.userRequest?.mobileNumber
-                ]
+                    ? [loginResult.userRequest?.mobileNumber]
                     : null
               }
             }, loginResult.userRequest?.toJson());
             // Store user details
             if (individualsResponse != null) {
               final loggedInIndividual = individualsResponse.individuals;
-              prefs.setString('individualId', loggedInIndividual
-                  ?.where((i) => i.userUuid != null)
-                  .first
-                  .id ?? '');
-              prefs.setString('userUuid', loggedInIndividual
-                  ?.where((i) => i.userUuid != null)
-                  .first
-                  .userUuid ?? '');
-              prefs.setString('defaultBoundaryCode', loggedInIndividual
-                  ?.where((i) => i.userUuid != null)
-                  .first
-                  .address
-                  ?.first
-                  .locality
-                  ?.code ?? '');
+              prefs.setString(
+                  'individualId',
+                  loggedInIndividual
+                          ?.where((i) => i.userUuid != null)
+                          .first
+                          .id ??
+                      '');
+              prefs.setString(
+                  'userUuid',
+                  loggedInIndividual
+                          ?.where((i) => i.userUuid != null)
+                          .first
+                          .userUuid ??
+                      '');
+              prefs.setString(
+                  'defaultBoundaryCode',
+                  loggedInIndividual
+                          ?.where((i) => i.userUuid != null)
+                          .first
+                          .address
+                          ?.first
+                          .locality
+                          ?.code ??
+                      '');
             }
-          }
-          else {
+          } else {
             prefs.setString(
                 'userInfo', jsonEncode(loginResult.userRequest?.toJson()));
             prefs.setInt('userId', loginResult.userRequest?.id ?? 0);
@@ -323,8 +313,7 @@ class RequesterLoginController extends GetxController {
           logInStatus.value = true;
 
           // Navigate to HomeScreen after successful login
-          Get.offAll(() =>
-          isDistributor && !isPGRAdmin
+          Get.offAll(() => isDistributor && !isPGRAdmin
               ? HomeView(selectedIndex: 0)
               : GigHomeView(selectedIndex: 0));
         } else {
@@ -333,20 +322,18 @@ class RequesterLoginController extends GetxController {
               'Auto login failed. Please try logging in with the created credentials.');
           // Handle login failure
         }
-      }
-      else {
+      } else {
         btnController.reset();
         Toast.showToast(
             'Something went wrong. The mobile number might already be in use');
       }
-    }
-    else{
+    } else {
       btnController.reset();
       Toast.showToast(
           'Too many login attempts. Contact admin or clear app data to try again.');
     }
 
-      update();
+    update();
   }
 
   // updateHouseDetails() async {
@@ -433,6 +420,4 @@ class RequesterLoginController extends GetxController {
     }
     return '${firstName[0].toUpperCase()} ${lastName[0].toUpperCase()}';
   }
-
-
 }
