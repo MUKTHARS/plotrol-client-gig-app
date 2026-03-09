@@ -152,18 +152,21 @@ class ViewAllOrdersScreen extends StatelessWidget {
         if (isFromNavigation) {
           return Scaffold(
             backgroundColor: Colors.white,
-            body: Column(
-              children: [
-                // TabBar without AppBar
-                Container(
-                  color: Colors.white,
-                  child: tabBar,
-                ),
-                // Body content
-                Expanded(
-                  child: bodyContent,
-                ),
-              ],
+            body: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              child: Column(
+                children: [
+                  // TabBar without AppBar
+                  Container(
+                    color: Colors.white,
+                    child: tabBar,
+                  ),
+                  // Body content
+                  Expanded(
+                    child: bodyContent,
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -309,43 +312,40 @@ class ViewAllOrdersScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 5),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 120,
-                        child: ReusableTextWidget(
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ReusableTextWidget(
                           text: order.service?.address?.city ?? '',
                           maxLines: 2,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
-                      ),
-                      const SizedBox(height: 5),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            size: 15,
-                            Icons.location_on,
-                          ),
-                          const SizedBox(width: 3),
-                          SizedBox(
-                            width: 120,
-                            child: ReusableTextWidget(
-                              text: AppUtils()
-                                  .formatAddress(order.service?.address),
-                              maxLines: 4,
+                        const SizedBox(height: 5),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              size: 15,
+                              Icons.location_on,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                    ],
+                            const SizedBox(width: 3),
+                            Flexible(
+                              child: ReusableTextWidget(
+                                text: AppUtils()
+                                    .formatAddress(order.service?.address),
+                                maxLines: 4,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
                   ),
-                  const Spacer(),
                   Container(
                     decoration:
                         _getDecorationBasedOnStatus(AppUtils().getOrderStatus(

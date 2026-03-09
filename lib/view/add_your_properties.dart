@@ -41,8 +41,7 @@ class AddYourProperties extends StatelessWidget {
           ),
         ),
         body: Padding(
-            padding:
-                const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 20),
+            padding: const EdgeInsets.all(16.0),
             child: SingleChildScrollView(
                 child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -301,12 +300,11 @@ class AddYourProperties extends StatelessWidget {
                     : const SizedBox.shrink(),
               ],
             ))),
-        bottomNavigationBar: SizedBox(
-          width: MediaQuery.of(context).size.width,
+        bottomNavigationBar: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.only(left: 4, right: 4, bottom: 0.5),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: RoundedLoadingButton(
-              width: Get.width,
+              width: MediaQuery.of(context).size.width,
               color: Colors.black,
               onPressed: () async {
                 ApiConstants.addProperties = ApiConstants.addPropertiesLive;

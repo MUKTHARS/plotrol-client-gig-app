@@ -180,29 +180,33 @@ class HomeScreen extends StatelessWidget {
                         SizedBox(
                           width: 2.h,
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ReusableTextWidget(
-                              text:
-                                  'Hi ${controller.tenantFirstName.toUpperCase()}',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            SizedBox(
-                              height: 1.h,
-                            ),
-                            const ReusableTextWidget(
-                              text: 'Do you need any service?',
-                            ),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ReusableTextWidget(
+                                text:
+                                    'Hi ${controller.tenantFirstName.toUpperCase()}',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                maxLines: 1,
+                              ),
+                              SizedBox(
+                                height: 1.h,
+                              ),
+                              const ReusableTextWidget(
+                                text: 'Do you need any service?',
+                                maxLines: 1,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
                 body: Padding(
-                  padding: EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: SingleChildScrollView(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
@@ -975,43 +979,40 @@ class OnGoingTask extends StatelessWidget {
                         spacing: 2,
                       )),
                   const SizedBox(width: 5),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 120,
-                        child: ReusableTextWidget(
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ReusableTextWidget(
                           text: order.service?.address?.city ?? '',
                           maxLines: 2,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
-                      ),
-                      const SizedBox(height: 5),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            size: 15,
-                            Icons.location_on,
-                          ),
-                          const SizedBox(width: 3),
-                          SizedBox(
-                            width: 120,
-                            child: ReusableTextWidget(
-                              text: AppUtils()
-                                  .formatAddress(order.service?.address),
-                              maxLines: 4,
+                        const SizedBox(height: 5),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              size: 15,
+                              Icons.location_on,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                    ],
+                            const SizedBox(width: 3),
+                            Flexible(
+                              child: ReusableTextWidget(
+                                text: AppUtils()
+                                    .formatAddress(order.service?.address),
+                                maxLines: 4,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
                   ),
-                  const Spacer(),
                   Container(
                     decoration:
                         _getDecorationBasedOnStatus(AppUtils().getOrderStatus(

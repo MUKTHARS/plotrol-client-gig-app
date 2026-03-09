@@ -46,7 +46,7 @@ class Profile extends StatelessWidget {
             },
             builder: (controller) {
               return Padding(
-                padding: const EdgeInsets.only(left: 10, right: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
@@ -86,23 +86,27 @@ class Profile extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 10,),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ReusableTextWidget(
-                                  text: controller.tenantFirstName.value.isNotEmpty ?
-                                  '${controller.tenantFirstName.value}${controller.tenantLastName.value}' :
-                                  '${createAccountController.firstName.value}${createAccountController.lastName.value}',
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                ReusableTextWidget(
-                                  text: controller.tenantEmail.value.isNotEmpty ? controller.tenantEmail.value :
-                                  createAccountController.emailController.text,
-                                  fontSize: 16,
-                                ),
-                              ],
-                            ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ReusableTextWidget(
+                                    text: controller.tenantFirstName.value.isNotEmpty ?
+                                    '${controller.tenantFirstName.value}${controller.tenantLastName.value}' :
+                                    '${createAccountController.firstName.value}${createAccountController.lastName.value}',
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    maxLines: 2,
+                                  ),
+                                  ReusableTextWidget(
+                                    text: controller.tenantEmail.value.isNotEmpty ? controller.tenantEmail.value :
+                                    createAccountController.emailController.text,
+                                    fontSize: 16,
+                                    maxLines: 2,
+                                  ),
+                                ],
+                              ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 20,),
