@@ -373,7 +373,7 @@ class OnGoingTask extends StatelessWidget {
                 propertyImage: order.imageUrls,
                 date: AppUtils.timeStampToDate(
                     order.service?.auditDetails?.createdTime),
-                tenantContactName: order.service?.additionalDetail?['household']?['contactNo'] ?? '',
+                tenantContactName: order.service?.additionalDetail?['household']?['contactNo']?.toString() ?? '',
                 type: AppUtils().getOrderStatus(order),
                 orderID: order.service?.serviceRequestId ?? '',
                 tenantLatitude:
