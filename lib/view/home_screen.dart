@@ -460,8 +460,8 @@ class PropertyWidget extends StatelessWidget {
                                                           ?.where((a) =>
                                                               a.key ==
                                                               'contactNo')
-                                                          .first
-                                                          .value ??
+                                                          .firstOrNull
+                                                          ?.value ??
                                                       '',
                                                   // locationID: controller
                                                   //         .getPropertiesDetails[
@@ -915,7 +915,7 @@ class OnGoingTask extends StatelessWidget {
                     : [ImageAssetsConst.sampleRoomPage],
                 date: AppUtils.timeStampToDate(
                     order.service?.auditDetails?.createdTime),
-                tenantContactName: order.service?.additionalDetail?['household']?['contactNo'],
+                tenantContactName: order.service?.additionalDetail?['household']?['contactNo'] ?? '',
                 type: AppUtils().getOrderStatus(order),
                 orderID: order.service?.serviceRequestId ?? '',
                 tenantLatitude:

@@ -478,9 +478,9 @@ class HomeScreenController extends GetxController {
       logger.i('completed orders : ${completedOrders}');
       logger.i('The whole response : ${getOrderDetails}');
       logger.i('The Created Orders : ${createdOrders}');
-      isOrderLoading.value = false;
-      update();
     }
+    isOrderLoading.value = false;
+    update();
   }
 
   getAssigneeDetails() async {
@@ -504,7 +504,7 @@ class HomeScreenController extends GetxController {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     if ((result?.user ?? []).isNotEmpty) {
       tenantFirstName.value = result?.user?.first.name?.split(' ').first ?? '';
-      tenantLastName.value = (result?.user?.first.name!.split(' ').length ?? 0) > 1 ? (result?.user?.first.name!.split(' ').last ?? '') : '';
+      tenantLastName.value = (result?.user?.first.name?.split(' ').length ?? 0) > 1 ? (result?.user?.first.name?.split(' ').last ?? '') : '';
       tenantEmail.value = result?.user?.first.emailId ?? '';
       tenantContactNumber.value = result?.user?.first.mobileNumber ?? '';
       // tenantSuburb.value = result?.details?.suburb ?? '';

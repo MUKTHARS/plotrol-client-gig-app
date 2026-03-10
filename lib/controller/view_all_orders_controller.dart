@@ -13,7 +13,7 @@ import '../helper/api_constants.dart';
 import '../model/response/autentication_response/autentication_response.dart';
 import '../model/response/book_service/file_store_model.dart';
 
-class ViewAllOrdersController extends GetxController with GetSingleTickerProviderStateMixin {
+class ViewAllOrdersController extends GetxController with GetTickerProviderStateMixin {
   // TabController
   late TabController tabController;
 
@@ -41,12 +41,23 @@ class ViewAllOrdersController extends GetxController with GetSingleTickerProvide
 
   // Check user role
   Future<void> checkForRole() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? userInfoString = prefs.getString('userInfo');
-    if (userInfoString != null && userInfoString.isNotEmpty) {
-      UserRequest? user = UserRequest.fromJson(jsonDecode(userInfoString));
-      isHelpDeskUser.value = AppUtils().checkIsGig(user.roles ?? []);
-      isPGRAdmin.value = AppUtils().checkIsPGRAdmin(user.roles ?? []);
+    isScreenLoading.value = true;
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? userInfoString = prefs.getString('userInfo');
+      if (userInfoString != null && userInfoString.isNotEmpty) {
+        UserRequest? user = UserRequest.fromJson(jsonDecode(userInfoString));
+        isHelpDeskUser.value = AppUtils().checkIsGig(user.roles ?? []);
+        isPGRAdmin.value = AppUtils().checkIsPGRAdmin(user.roles ?? []);
+      }
+      final int tabCount = isHelpDeskUser.value ? 2 : 3;
+      if (tabController.length != tabCount) {
+        final oldController = tabController;
+        tabController = TabController(length: tabCount, vsync: this);
+        WidgetsBinding.instance.addPostFrameCallback((_) => oldController.dispose());
+      }
+    } catch (e) {
+      print('Error in checkForRole: $e');
     }
     isScreenLoading.value = false;
     update();
