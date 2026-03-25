@@ -188,8 +188,8 @@ class GeoLocation {
   GeoLocation({this.latitude, this.longitude,});
 
   GeoLocation.fromJson(Map<String, dynamic> json) {
-    latitude = json['latitude'];
-    longitude = json['longitude'];
+    latitude = (json['latitude'] as num?)?.toDouble();
+    longitude = (json['longitude'] as num?)?.toDouble();
   }
 
   Map<String, dynamic> toJson() => {

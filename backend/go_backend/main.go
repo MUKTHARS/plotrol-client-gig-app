@@ -57,6 +57,7 @@ func main() {
 	// New property + filestore handlers (use *gorm.DB)
 	propHandler := handlers.NewPropertyHandler(gormDB)
 	fsHandler := handlers.NewFileStoreHandler(gormDB, uploadDir, cfg.BaseURL())
+	pgrHandler := handlers.NewPGRHandler(gormDB)
 
 	// ─── Gin router ───────────────────────────────────────────────────────────
 	r := gin.Default()
@@ -87,6 +88,11 @@ func main() {
 	// File store
 	r.POST("/filestore/v1/files", gin.WrapF(fsHandler.UploadFiles))
 	r.GET("/filestore/v1/files/url", gin.WrapF(fsHandler.GetFileURLs))
+
+	// PGR service requests (orders)
+	r.POST("/pgr-services/v2/request/_create", gin.WrapF(pgrHandler.CreateServiceRequest))
+	r.POST("/pgr-services/v2/request/_search", gin.WrapF(pgrHandler.SearchServiceRequests))
+	r.POST("/pgr-services/v2/request/_update", gin.WrapF(pgrHandler.UpdateServiceRequest))
 
 	// Debug catch-all
 	r.NoRoute(func(c *gin.Context) {

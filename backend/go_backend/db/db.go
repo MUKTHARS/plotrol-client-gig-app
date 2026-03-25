@@ -164,6 +164,33 @@ type FileStore struct {
 	CreatedAt   time.Time
 }
 
+// ServiceRequest stores PGR (order) records created by users.
+type ServiceRequest struct {
+	ID                    uint      `gorm:"primaryKey;autoIncrement"`
+	ServiceRequestId      string    `gorm:"column:service_request_id;uniqueIndex;not null"`
+	TenantID              string    `gorm:"column:tenant_id"`
+	ServiceCode           string    `gorm:"column:service_code"`
+	Description           string    `gorm:"column:description;type:text"`
+	ApplicationStatus     string    `gorm:"column:application_status;default:PENDING_ASSIGNMENT"`
+	Source                string    `gorm:"column:source"`
+	Active                bool      `gorm:"column:active;default:true"`
+	RowVersion            int       `gorm:"column:row_version;default:1"`
+	AdditionalDetail      string    `gorm:"column:additional_detail;type:text"`
+	AddressJSON           string    `gorm:"column:address_json;type:text"`
+	UserJSON              string    `gorm:"column:user_json;type:text"`
+	WorkflowAction        string    `gorm:"column:workflow_action"`
+	WorkflowAssignes      string    `gorm:"column:workflow_assignes;type:text"`
+	WorkflowHrmsAssignes  string    `gorm:"column:workflow_hrms_assignes;type:text"`
+	WorkflowComments      string    `gorm:"column:workflow_comments;type:text"`
+	AuditCreatedBy        string    `gorm:"column:audit_created_by"`
+	AuditCreatedTime      int64     `gorm:"column:audit_created_time"`
+	AuditLastModifiedBy   string    `gorm:"column:audit_last_modified_by"`
+	AuditLastModifiedTime int64     `gorm:"column:audit_last_modified_time"`
+	MobileNumber          string    `gorm:"column:mobile_number"`
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+}
+
 // ─── GORM connection ──────────────────────────────────────────────────────────
 
 // ConnectGORM creates the database if needed and returns a *gorm.DB.
@@ -218,6 +245,7 @@ func RunMigrationsGORM(db *gorm.DB) error {
 		&HouseholdAdditionalField{},
 		&HouseholdMember{},
 		&FileStore{},
+		&ServiceRequest{},
 	); err != nil {
 		return fmt.Errorf("auto migrate: %w", err)
 	}
