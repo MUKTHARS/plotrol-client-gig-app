@@ -8,6 +8,7 @@ import (
 	"plotrol-backend/db"
 	"plotrol-backend/handlers"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
@@ -19,65 +20,70 @@ func main() {
 
 	cfg := config.Load()
 
-	// Connect to MySQL and create database if needed
-	database, err := db.Connect(cfg)
+	// Connect via GORM (creates database if it doesn't exist)
+	gormDB, err := db.ConnectGORM(cfg)
 	if err != nil {
-		log.Fatalf("[FATAL] Database connection failed: %v\n\nMake sure MySQL is running on %s:%s",
+		log.Fatalf("[FATAL] Database connection failed: %v\n\nMake sure PostgreSQL is running on %s:%s",
 			err, cfg.DBHost, cfg.DBPort)
 	}
-	defer database.Close()
-	log.Printf("[ok] Connected to MySQL – database: %s", cfg.DBName)
 
-	// Create tables if they don't exist
-	if err := db.RunMigrations(database); err != nil {
+	// Get the underlying *sql.DB so existing handlers work without changes
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		log.Fatalf("[FATAL] Failed to obtain sql.DB from GORM: %v", err)
+	}
+	defer sqlDB.Close()
+	log.Printf("[ok] Connected to PostgreSQL via GORM – database: %s", cfg.DBName)
+
+	// Run GORM AutoMigrate
+	if err := db.RunMigrationsGORM(gormDB); err != nil {
 		log.Fatalf("[FATAL] Migration failed: %v", err)
 	}
-	log.Println("[ok] Database migrations applied")
+	log.Println("[ok] GORM AutoMigrate applied")
 
-	// Register routes
-	mux := http.NewServeMux()
+	// Build handlers (unchanged – they receive *sql.DB as before)
+	authHandler := handlers.NewAuthHandler(sqlDB, cfg)
+	indHandler := handlers.NewIndividualHandler(sqlDB)
+	empHandler := handlers.NewEmployeeHandler(sqlDB)
 
-	authHandler := handlers.NewAuthHandler(database, cfg)
-	indHandler := handlers.NewIndividualHandler(database)
-	empHandler := handlers.NewEmployeeHandler(database)
+	// Gin router
+	r := gin.Default()
+	r.Use(corsMiddleware())
 
 	// Auth
-	mux.HandleFunc("/user/oauth/token", authHandler.Login)
-	mux.HandleFunc("/api/v1/tenants/createtenantuser", authHandler.CreateTenantUser)
+	r.POST("/user/oauth/token", gin.WrapF(authHandler.Login))
+	r.POST("/api/v1/tenants/createtenantuser", gin.WrapF(authHandler.CreateTenantUser))
 
 	// Employee (requester signup flow)
-	mux.HandleFunc("/egov-hrms/employees/_create", empHandler.CreateEmployee)
+	r.POST("/egov-hrms/employees/_create", gin.WrapF(empHandler.CreateEmployee))
 
 	// Individual
-	mux.HandleFunc("/individual/v1/_search", indHandler.SearchIndividuals)
+	r.POST("/individual/v1/_search", gin.WrapF(indHandler.SearchIndividuals))
 
 	// Debug catch-all
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("[debug] unhandled route: %s %s", r.Method, r.URL.Path)
-		http.NotFound(w, r)
+	r.NoRoute(func(c *gin.Context) {
+		log.Printf("[debug] unhandled route: %s %s", c.Request.Method, c.Request.URL.Path)
+		c.Status(http.StatusNotFound)
 	})
-
-	// Wrap with CORS
-	handler := corsMiddleware(mux)
 
 	addr := ":" + cfg.Port
 	log.Printf("[ok] Plotrol backend running on http://localhost%s", addr)
 	log.Println("     Android emulator access: http://10.0.2.2:" + cfg.Port)
-	if err := http.ListenAndServe(addr, handler); err != nil {
+	if err := r.Run(addr); err != nil {
 		log.Fatalf("[FATAL] Server failed: %v", err)
 	}
 }
 
 // corsMiddleware allows cross-origin requests (needed for Flutter dev/emulator).
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Access-Control-Allow-Origin")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, Access-Control-Allow-Origin")
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-		next.ServeHTTP(w, r)
-	})
+		c.Next()
+	}
 }
