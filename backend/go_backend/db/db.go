@@ -45,6 +45,125 @@ type User struct {
 
 func (User) TableName() string { return "users" }
 
+// ─── Property GORM models ─────────────────────────────────────────────────────
+
+type Individual struct {
+	ID                  uint      `gorm:"primaryKey;autoIncrement"`
+	ClientReferenceId   string    `gorm:"column:client_reference_id;uniqueIndex;not null"`
+	TenantID            string    `gorm:"column:tenant_id"`
+	GivenName           string    `gorm:"column:given_name"`
+	FamilyName          string    `gorm:"column:family_name"`
+	MobileNumber        string    `gorm:"column:mobile_number"`
+	Email               string    `gorm:"column:email"`
+	UserUUID            string    `gorm:"column:user_uuid"`
+	IsDeleted           bool      `gorm:"column:is_deleted;default:false"`
+	IsSystemUser        bool      `gorm:"column:is_system_user;default:false"`
+	NonRecoverableError bool      `gorm:"column:non_recoverable_error;default:false"`
+	RowVersion          int       `gorm:"column:row_version;default:1"`
+	CreatedBy           string    `gorm:"column:created_by"`
+	CreatedTime         int64     `gorm:"column:created_time"`
+	LastModifiedBy      string    `gorm:"column:last_modified_by"`
+	LastModifiedTime    int64     `gorm:"column:last_modified_time"`
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}
+
+type IndividualAddress struct {
+	ID            uint    `gorm:"primaryKey;autoIncrement"`
+	IndividualID  uint    `gorm:"column:individual_id;index;not null"`
+	TenantID      string  `gorm:"column:tenant_id"`
+	Type          string  `gorm:"column:type"`
+	AddressLine1  string  `gorm:"column:address_line1"`
+	AddressLine2  string  `gorm:"column:address_line2"`
+	Landmark      string  `gorm:"column:landmark"`
+	City          string  `gorm:"column:city"`
+	Pincode       string  `gorm:"column:pincode"`
+	BuildingName  string  `gorm:"column:building_name"`
+	Street        string  `gorm:"column:street"`
+	LocalityCode  string  `gorm:"column:locality_code"`
+	LocalityName  string  `gorm:"column:locality_name"`
+	Latitude      float64 `gorm:"column:latitude"`
+	Longitude     float64 `gorm:"column:longitude"`
+	CreatedBy     string  `gorm:"column:created_by"`
+	CreatedTime   int64   `gorm:"column:created_time"`
+}
+
+type IndividualIdentifier struct {
+	ID                uint   `gorm:"primaryKey;autoIncrement"`
+	IndividualID      uint   `gorm:"column:individual_id;index;not null"`
+	ClientReferenceId string `gorm:"column:client_reference_id"`
+	IdentifierType    string `gorm:"column:identifier_type"`
+	IdentifierId      string `gorm:"column:identifier_id"`
+}
+
+type Household struct {
+	ID                  uint      `gorm:"primaryKey;autoIncrement"`
+	ClientReferenceId   string    `gorm:"column:client_reference_id;uniqueIndex;not null"`
+	TenantID            string    `gorm:"column:tenant_id"`
+	HouseholdType       string    `gorm:"column:household_type"`
+	MemberCount         int       `gorm:"column:member_count;default:1"`
+	IsDeleted           bool      `gorm:"column:is_deleted;default:false"`
+	NonRecoverableError bool      `gorm:"column:non_recoverable_error;default:false"`
+	RowVersion          int       `gorm:"column:row_version;default:1"`
+	AddrTenantID        string    `gorm:"column:addr_tenant_id"`
+	AddrType            string    `gorm:"column:addr_type"`
+	AddrAddressLine1    string    `gorm:"column:addr_address_line1"`
+	AddrAddressLine2    string    `gorm:"column:addr_address_line2"`
+	AddrLandmark        string    `gorm:"column:addr_landmark"`
+	AddrCity            string    `gorm:"column:addr_city"`
+	AddrPincode         string    `gorm:"column:addr_pincode"`
+	AddrBuildingName    string    `gorm:"column:addr_building_name"`
+	AddrStreet          string    `gorm:"column:addr_street"`
+	AddrLocalityCode    string    `gorm:"column:addr_locality_code"`
+	AddrLocalityName    string    `gorm:"column:addr_locality_name"`
+	AddrLatitude        float64   `gorm:"column:addr_latitude"`
+	AddrLongitude       float64   `gorm:"column:addr_longitude"`
+	CreatedBy           string    `gorm:"column:created_by"`
+	CreatedTime         int64     `gorm:"column:created_time"`
+	LastModifiedBy      string    `gorm:"column:last_modified_by"`
+	LastModifiedTime    int64     `gorm:"column:last_modified_time"`
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}
+
+type HouseholdAdditionalField struct {
+	ID          uint   `gorm:"primaryKey;autoIncrement"`
+	HouseholdID uint   `gorm:"column:household_id;index;not null"`
+	Key         string `gorm:"column:key"`
+	Value       string `gorm:"column:value;type:text"`
+}
+
+type HouseholdMember struct {
+	ID                          uint      `gorm:"primaryKey;autoIncrement"`
+	ClientReferenceId           string    `gorm:"column:client_reference_id;uniqueIndex;not null"`
+	HouseholdID                 uint      `gorm:"column:household_id;index"`
+	HouseholdClientReferenceId  string    `gorm:"column:household_client_reference_id;index"`
+	IndividualID                uint      `gorm:"column:individual_id;index"`
+	IndividualClientReferenceId string    `gorm:"column:individual_client_reference_id;index"`
+	IsHeadOfHousehold           bool      `gorm:"column:is_head_of_household;default:false"`
+	TenantID                    string    `gorm:"column:tenant_id"`
+	IsDeleted                   bool      `gorm:"column:is_deleted;default:false"`
+	NonRecoverableError         bool      `gorm:"column:non_recoverable_error;default:false"`
+	RowVersion                  int       `gorm:"column:row_version;default:1"`
+	CreatedBy                   string    `gorm:"column:created_by"`
+	CreatedTime                 int64     `gorm:"column:created_time"`
+	LastModifiedBy              string    `gorm:"column:last_modified_by"`
+	LastModifiedTime            int64     `gorm:"column:last_modified_time"`
+	CreatedAt                   time.Time
+	UpdatedAt                   time.Time
+}
+
+type FileStore struct {
+	ID          uint      `gorm:"primaryKey;autoIncrement"`
+	FileStoreId string    `gorm:"column:file_store_id;uniqueIndex;not null"`
+	Name        string    `gorm:"column:name"`
+	TenantID    string    `gorm:"column:tenant_id"`
+	Module      string    `gorm:"column:module"`
+	FilePath    string    `gorm:"column:file_path"`
+	URL         string    `gorm:"column:url;type:text"`
+	CreatedAt   time.Time
+}
+
 // ─── GORM connection ──────────────────────────────────────────────────────────
 
 // ConnectGORM creates the database if needed and returns a *gorm.DB.
@@ -90,7 +209,16 @@ func ConnectGORM(cfg *config.Config) (*gorm.DB, error) {
 
 // RunMigrationsGORM auto-migrates the schema using GORM.
 func RunMigrationsGORM(db *gorm.DB) error {
-	if err := db.AutoMigrate(&User{}); err != nil {
+	if err := db.AutoMigrate(
+		&User{},
+		&Individual{},
+		&IndividualAddress{},
+		&IndividualIdentifier{},
+		&Household{},
+		&HouseholdAdditionalField{},
+		&HouseholdMember{},
+		&FileStore{},
+	); err != nil {
 		return fmt.Errorf("auto migrate: %w", err)
 	}
 	// Ensure indexes exist (GORM creates uniqueIndex tags, but add regular ones too)

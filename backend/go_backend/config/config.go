@@ -24,6 +24,14 @@ func Load() *Config {
 	}
 }
 
+// BaseURL returns the public base URL for this server (used to build file URLs).
+func (c *Config) BaseURL() string {
+	if v := os.Getenv("BASE_URL"); v != "" {
+		return v
+	}
+	return "http://localhost:" + c.Port
+}
+
 func getEnv(key, defaultVal string) string {
 	if v := os.Getenv(key); v != "" {
 		return v

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"plotrol-backend/config"
 	"plotrol-backend/db"
@@ -35,20 +36,34 @@ func main() {
 	defer sqlDB.Close()
 	log.Printf("[ok] Connected to PostgreSQL via GORM – database: %s", cfg.DBName)
 
-	// Run GORM AutoMigrate
+	// Run GORM AutoMigrate (creates all tables including new property tables)
 	if err := db.RunMigrationsGORM(gormDB); err != nil {
 		log.Fatalf("[FATAL] Migration failed: %v", err)
 	}
 	log.Println("[ok] GORM AutoMigrate applied")
 
-	// Build handlers (unchanged – they receive *sql.DB as before)
+	// Ensure uploads directory exists
+	uploadDir := "./uploads"
+	if err := os.MkdirAll(uploadDir, 0o755); err != nil {
+		log.Fatalf("[FATAL] Cannot create uploads dir: %v", err)
+	}
+
+	// ─── Handlers ─────────────────────────────────────────────────────────────
+	// Existing handlers (unchanged – they receive *sql.DB as before)
 	authHandler := handlers.NewAuthHandler(sqlDB, cfg)
 	indHandler := handlers.NewIndividualHandler(sqlDB)
 	empHandler := handlers.NewEmployeeHandler(sqlDB)
 
-	// Gin router
+	// New property + filestore handlers (use *gorm.DB)
+	propHandler := handlers.NewPropertyHandler(gormDB)
+	fsHandler := handlers.NewFileStoreHandler(gormDB, uploadDir, cfg.BaseURL())
+
+	// ─── Gin router ───────────────────────────────────────────────────────────
 	r := gin.Default()
 	r.Use(corsMiddleware())
+
+	// Serve uploaded files statically
+	r.Static("/files", uploadDir)
 
 	// Auth
 	r.POST("/user/oauth/token", gin.WrapF(authHandler.Login))
@@ -57,8 +72,21 @@ func main() {
 	// Employee (requester signup flow)
 	r.POST("/egov-hrms/employees/_create", gin.WrapF(empHandler.CreateEmployee))
 
-	// Individual
+	// Individual – search (existing) + create (new)
 	r.POST("/individual/v1/_search", gin.WrapF(indHandler.SearchIndividuals))
+	r.POST("/individual/v1/_create", gin.WrapF(propHandler.CreateIndividual))
+
+	// Household
+	r.POST("/household/v1/_create", gin.WrapF(propHandler.CreateHousehold))
+	r.POST("/household/v1/_search", gin.WrapF(propHandler.SearchHouseholds))
+
+	// Household member
+	r.POST("/household/member/v1/_create", gin.WrapF(propHandler.CreateHouseholdMember))
+	r.POST("/household/member/v1/_search", gin.WrapF(propHandler.SearchHouseholdMembers))
+
+	// File store
+	r.POST("/filestore/v1/files", gin.WrapF(fsHandler.UploadFiles))
+	r.GET("/filestore/v1/files/url", gin.WrapF(fsHandler.GetFileURLs))
 
 	// Debug catch-all
 	r.NoRoute(func(c *gin.Context) {
@@ -79,7 +107,7 @@ func corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, Access-Control-Allow-Origin")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, Access-Control-Allow-Origin, auth-token")
 		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
