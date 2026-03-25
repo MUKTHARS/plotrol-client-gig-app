@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -n \"additionalDetail\\\\?\\\\[''household''\\\\]\" lib/view/*.dart lib/view/gig_views/*.dart)"
+      "Bash(grep -n \"additionalDetail\\\\?\\\\[''household''\\\\]\" lib/view/*.dart lib/view/gig_views/*.dart)",
+      "Bash(go version:*)",
+      "Bash(mysql --version)",
+      "Bash(where mysql:*)",
+      "Bash(where mysqld:*)",
+      "Bash(powershell -Command \"Get-Service -Name ''*mysql*'' 2>&1\")",
+      "Bash(go mod:*)",
+      "Bash(go build:*)"
     ]
   }
 }

@@ -21,7 +21,7 @@ class ApiConstants {
   static String individualSearch = '/individual/v1/_search';
   static String memberSearch = '/household/member/v1/_search';
 
-  static String createAccount = '';
+  static String createAccount = '${host}/api/v1/tenants/createtenantuser';
 
   static String bookService = '/pgr-services/v2/request/_create';
   static String updateService = '/pgr-services/v2/request/_update';
@@ -44,7 +44,10 @@ class ApiConstants {
 
   static String getTenant = '';
 
-  static String host = 'https://health-demo.digit.org';
+  // Local Go backend
+  // Android emulator → 10.0.2.2 maps to your PC's localhost
+  // Real device on same Wi-Fi → replace with your PC's local IP, e.g. http://192.168.1.x:8080
+  static String host = 'http://localhost:8080';
   /// authentication
 
   static String fileUpload = '/filestore/v1/files';
