@@ -73,6 +73,10 @@ class HomeScreenController extends GetxController {
 
   List<ServiceWrapper> createdOrders = [];
 
+  List<ServiceWrapper> todayCreatedOrders = [];
+
+  List<ServiceWrapper> todayCompletedOrders = [];
+
   List<String> address = [];
 
   List<String> notes = [];
@@ -226,21 +230,41 @@ class HomeScreenController extends GetxController {
       '${ApiConstants.host}${ApiConstants.fileFetch}?tenantId=$tenantId&fileStoreIds=${storeIds.join(",")}',
     );
 
+    logger.i('[fetchFiles][HomeController] Request URL: $uri');
+    logger.i('[fetchFiles][HomeController] Store IDs requested: $storeIds');
+
     final headers = {
       'accept': 'application/json, text/plain, */*',
-      // 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
-      // Add referer if your backend requires it
-      // 'referer': 'https://qa.digit.org/digit-ui/employee/dss/dashboard/fsm',
     };
 
     final res = await http.get(uri, headers: headers);
+
+    logger.i('[fetchFiles][HomeController] Response status: ${res.statusCode}');
+    logger.i('[fetchFiles][HomeController] Response body: ${res.body}');
 
     if (res.statusCode == 200) {
       fileStoreListModel = FileStoreListModel.fromJson(
         json.decode(res.body) as Map<String, dynamic>,
       );
+      // Use the URL exactly as returned by the server — it already contains
+      // the server's own accessible IP (works for both emulator and real device
+      // because android:usesCleartextTraffic="true" allows HTTP on all IPs).
+      // Only fix genuinely relative paths (no host) by prepending ApiConstants.host.
+      for (final f in fileStoreListModel.fileStoreIds ?? []) {
+        final rawUrl = f.url ?? '';
+        if (rawUrl.isEmpty) continue;
+
+        final parsed = Uri.tryParse(rawUrl);
+        if (parsed != null && !parsed.hasAuthority) {
+          // Relative path — prepend host so it becomes absolute
+          f.url = '${ApiConstants.host}$rawUrl';
+          logger.w('[fetchFiles][HomeController] Relative URL for id=${f.id}, prepended host: ${f.url}');
+        } else {
+          logger.i('[fetchFiles][HomeController] id=${f.id}, url=${f.url}');
+        }
+      }
     } else {
-      print('Failed to fetch files: ${res.statusCode} ${res.body}');
+      logger.e('[fetchFiles][HomeController] Failed: ${res.statusCode} ${res.body}');
     }
 
     return fileStoreListModel?.fileStoreIds;
@@ -276,9 +300,19 @@ class HomeScreenController extends GetxController {
       if (hh != null) {
         hh.imageUrls ??= [];
         if (file.url != null && file.url!.isNotEmpty) {
-          hh.imageUrls!.add(file.url!.split(',').first);
+          final url = file.url!.split(',').first;
+          hh.imageUrls!.add(url);
+          logger.i('[enrichHouseholds] Added image URL: $url for household');
+        } else {
+          logger.w('[enrichHouseholds] file id=${file.id} has empty url, skipping');
         }
+      } else {
+        logger.w('[enrichHouseholds] No household found for file id=${file.id}');
       }
+    }
+
+    for (final hh in households) {
+      logger.i('[enrichHouseholds] household id=${hh.id} -> imageUrls=${hh.imageUrls}');
     }
 
     return households;
@@ -331,21 +365,28 @@ class HomeScreenController extends GetxController {
       }
 
       if (allHouseholdIds.isNotEmpty) {
+        logger.i('[enrichOrders][HomeController] Fetching ${allHouseholdIds.length} image IDs');
         final models = await fetchFiles(allHouseholdIds.toList(), tenantId);
+        logger.i('[enrichOrders][HomeController] Got ${models?.length ?? 0} file models back');
+
         final Map<String, String> idToUrl = {
           for (final f in (models ?? <FileStoreModel>[]))
             if ((f.url ?? '').isNotEmpty && (f.id ?? '').isNotEmpty) f.id.toString(): f.url!.split(',').first
         };
+
+        logger.i('[enrichOrders][HomeController] idToUrl map: $idToUrl');
 
         for (final entry in orderToHouseholdIds.entries) {
           final urls = <String>[];
           for (final id in entry.value) {
             final url = idToUrl[id];
             if (url != null && url.isNotEmpty) urls.add(url);
+            else logger.w('[enrichOrders][HomeController] No URL found for id=$id');
           }
           // dedupe, keep order
           final seen = <String>{};
           entry.key.imageUrls = urls.where((u) => seen.add(u)).toList();
+          logger.i('[enrichOrders][HomeController] order=${entry.key.service?.serviceRequestId} -> imageUrls=${entry.key.imageUrls}');
         }
       }
 
@@ -432,6 +473,8 @@ class HomeScreenController extends GetxController {
       otherOrders.clear();
       acceptedOrders.clear();
       createdOrders.clear();
+      todayCreatedOrders.clear();
+      todayCompletedOrders.clear();
       activeOrders.clear();
       completedOrders.clear();
 
@@ -464,6 +507,12 @@ class HomeScreenController extends GetxController {
         try {
           if (createdTime >= startDate && createdTime <= endDate) {
             todayOrders.add(order);
+            if (action == 'CREATE' || action == 'ASSIGN') {
+              todayCreatedOrders.add(order);
+            }
+            if (action == 'RESOLVE') {
+              todayCompletedOrders.add(order);
+            }
           } else {
             otherOrders.add(order);
           }

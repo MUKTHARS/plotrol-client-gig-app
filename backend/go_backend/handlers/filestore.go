@@ -17,11 +17,14 @@ import (
 	"gorm.io/gorm"
 )
 
-// rewriteFileURL replaces the host in a stored URL with the host that the
-// client actually used to reach us.  This is critical for Android emulators
-// (host = 10.0.2.2) and real devices on Wi-Fi (host = LAN IP) because the
-// backend is started with BASE_URL=http://localhost:8080 by default, so
-// stored URLs contain "localhost" which is unreachable from any non-host OS.
+// rewriteFileURL always replaces the host in a stored URL with the host that
+// the client actually used to reach us. This handles every scenario:
+//   - BASE_URL=http://localhost:8080  (default dev setup)
+//   - BASE_URL changed between uploads (IP changed, different network)
+//   - Emulator (10.0.2.2) vs real device (LAN IP) vs any other host
+//
+// Because the file is always stored on THIS server, whatever host the client
+// used to call us is always the correct host to serve the file from.
 func rewriteFileURL(storedURL, requestHost string) string {
 	if storedURL == "" || requestHost == "" {
 		return storedURL
@@ -31,15 +34,14 @@ func rewriteFileURL(storedURL, requestHost string) string {
 		log.Printf("[filestore] rewriteFileURL: cannot parse %q: %v", storedURL, err)
 		return storedURL
 	}
-	// Only rewrite when the stored URL points to localhost / 127.0.0.1
-	h := strings.ToLower(u.Hostname())
-	if h == "localhost" || h == "127.0.0.1" {
+	// Always rewrite — regardless of what host was stored — to the current
+	// request host so the client can always reach the file.
+	if u.Host != requestHost {
 		original := u.Host
 		u.Host = requestHost
 		log.Printf("[filestore] rewriteFileURL: %q -> %q (host %s -> %s)", storedURL, u.String(), original, requestHost)
-		return u.String()
 	}
-	return storedURL
+	return u.String()
 }
 
 // FileStoreHandler handles file upload and URL fetch.
@@ -115,8 +117,10 @@ func (h *FileStoreHandler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 		src.Close()
 		dst.Close()
 
-		// Public URL: baseURL/files/<storedName>
-		publicURL := fmt.Sprintf("%s/files/%s", strings.TrimRight(h.baseURL, "/"), storedName)
+		// Store the URL using baseURL (canonical form in DB).
+		// The URL is always rewritten at fetch time using the request host,
+		// so the stored value is just a reference — the path is what matters.
+		storedURL := fmt.Sprintf("%s/files/%s", strings.TrimRight(h.baseURL, "/"), storedName)
 
 		rec := dbpkg.FileStore{
 			FileStoreId: storeId,
@@ -124,16 +128,19 @@ func (h *FileStoreHandler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 			TenantID:    tenantId,
 			Module:      module,
 			FilePath:    destPath,
-			URL:         publicURL,
+			URL:         storedURL,
 		}
 		h.gdb.Create(&rec)
 
+		// Return a URL rewritten to the current request host so the uploader
+		// can immediately access the file from whatever device they're on.
+		responseURL := rewriteFileURL(storedURL, r.Host)
 		results = append(results, map[string]interface{}{
 			"fileStoreId": storeId,
 			"name":        fh.Filename,
 			"tenantId":    tenantId,
 			"id":          storeId,
-			"url":         publicURL,
+			"url":         responseURL,
 		})
 	}
 

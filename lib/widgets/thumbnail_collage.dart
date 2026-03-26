@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class ThumbCollage extends StatelessWidget {
@@ -18,11 +19,18 @@ class ThumbCollage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[ThumbCollage] Received ${urls.length} URLs: $urls');
     final display = urls.where((u) => u.isNotEmpty && (u.startsWith('http://') || u.startsWith('https://'))).take(5).toList();
+    final filtered = urls.where((u) => u.isNotEmpty && !(u.startsWith('http://') || u.startsWith('https://'))).toList();
+    if (filtered.isNotEmpty) {
+      debugPrint('[ThumbCollage] FILTERED OUT (not http/https): $filtered');
+    }
+    debugPrint('[ThumbCollage] Displaying ${display.length} URLs: $display');
     final extra = urls.length - display.length;
 
     // If no images, show a neutral placeholder
     if (display.isEmpty) {
+      debugPrint('[ThumbCollage] No valid URLs to display — showing placeholder');
       return ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
         child: Container(
@@ -86,12 +94,16 @@ class _Thumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[_Thumb] Loading image: $url');
     return Image.network(
       url,
       fit: BoxFit.cover,
       // lightweight loader
       frameBuilder: (context, child, frame, _) {
-        if (frame != null) return child;
+        if (frame != null) {
+          debugPrint('[_Thumb] Frame loaded for: $url');
+          return child;
+        }
         return Container(
           color: Colors.grey.shade200,
           alignment: Alignment.center,
@@ -112,11 +124,14 @@ class _Thumb extends StatelessWidget {
           ),
         );
       },
-      errorBuilder: (_, __, ___) => Container(
-        color: Colors.grey.shade200,
-        alignment: Alignment.center,
-        child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
-      ),
+      errorBuilder: (_, error, stackTrace) {
+        debugPrint('[_Thumb] ERROR loading $url — $error');
+        return Container(
+          color: Colors.grey.shade200,
+          alignment: Alignment.center,
+          child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+        );
+      },
       // downsample thumbnails for perf
       cacheWidth: 256,
       cacheHeight: 256,

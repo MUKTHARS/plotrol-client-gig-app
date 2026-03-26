@@ -708,7 +708,10 @@ class OnGoingTask extends StatelessWidget {
 
         if (isVerticalScrollable) {
           if (status == 'created') {
-            if (controller.createdOrders.isEmpty) {
+            final orders = isForStatusScreen
+                ? controller.todayCreatedOrders
+                : controller.createdOrders;
+            if (orders.isEmpty) {
               return SizedBox(
                 height: Get.height * 0.6,
                 child: const Center(
@@ -725,12 +728,10 @@ class OnGoingTask extends StatelessWidget {
                   : const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               itemCount: maxItems != null
-                  ? (controller.createdOrders.length > maxItems!
-                      ? maxItems!
-                      : controller.createdOrders.length)
-                  : controller.createdOrders.length,
+                  ? (orders.length > maxItems! ? maxItems! : orders.length)
+                  : orders.length,
               itemBuilder: (context, index) {
-                return buildOrderItem(controller.createdOrders[index]);
+                return buildOrderItem(orders[index]);
               },
             );
           }
@@ -780,7 +781,10 @@ class OnGoingTask extends StatelessWidget {
               },
             );
           } else if (status == 'completed') {
-            if (controller.completedOrders.isEmpty) {
+            final completedList = isForStatusScreen
+                ? controller.todayCompletedOrders
+                : controller.completedOrders;
+            if (completedList.isEmpty) {
               return SizedBox(
                 height: Get.height * 0.6,
                 child: const Center(
@@ -796,9 +800,9 @@ class OnGoingTask extends StatelessWidget {
                   ? null
                   : const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
-              itemCount: controller.completedOrders.length,
+              itemCount: completedList.length,
               itemBuilder: (context, index) {
-                return buildOrderItem(controller.completedOrders[index]);
+                return buildOrderItem(completedList[index]);
               },
             );
           } else if (status == 'active') {

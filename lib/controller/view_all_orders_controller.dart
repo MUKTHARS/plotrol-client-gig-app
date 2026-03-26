@@ -227,21 +227,28 @@ class ViewAllOrdersController extends GetxController with GetTickerProviderState
       }
 
       if (allHouseholdIds.isNotEmpty) {
+        print('[enrichOrders][ViewAllOrders] Fetching ${allHouseholdIds.length} image IDs');
         final models = await fetchFiles(allHouseholdIds.toList(), tenantId);
+        print('[enrichOrders][ViewAllOrders] Got ${models?.length ?? 0} file models back');
+
         final Map<String, String> idToUrl = {
           for (final f in (models ?? <FileStoreModel>[]))
             if ((f.url ?? '').isNotEmpty && (f.id ?? '').isNotEmpty) f.id.toString(): f.url!.split(',').first
         };
+
+        print('[enrichOrders][ViewAllOrders] idToUrl: $idToUrl');
 
         for (final entry in orderToHouseholdIds.entries) {
           final urls = <String>[];
           for (final id in entry.value) {
             final url = idToUrl[id];
             if (url != null && url.isNotEmpty) urls.add(url);
+            else print('[enrichOrders][ViewAllOrders] No URL for id=$id');
           }
           // dedupe, keep order
           final seen = <String>{};
           entry.key.imageUrls = urls.where((u) => seen.add(u)).toList();
+          print('[enrichOrders][ViewAllOrders] order=${entry.key.service?.serviceRequestId} -> imageUrls=${entry.key.imageUrls}');
         }
       }
 
@@ -293,18 +300,41 @@ class ViewAllOrdersController extends GetxController with GetTickerProviderState
       '${ApiConstants.host}${ApiConstants.fileFetch}?tenantId=$tenantId&fileStoreIds=${storeIds.join(",")}',
     );
 
+    print('[fetchFiles][ViewAllOrders] Request URL: $uri');
+    print('[fetchFiles][ViewAllOrders] Store IDs: $storeIds');
+
     final headers = {
       'accept': 'application/json, text/plain, */*',
     };
 
     final res = await http.get(uri, headers: headers);
 
+    print('[fetchFiles][ViewAllOrders] Response status: ${res.statusCode}');
+    print('[fetchFiles][ViewAllOrders] Response body: ${res.body}');
+
     if (res.statusCode == 200) {
       fileStoreListModel = FileStoreListModel.fromJson(
         json.decode(res.body) as Map<String, dynamic>,
       );
+      // Use the URL exactly as returned by the server — it already contains
+      // the server's own accessible IP (works for both emulator and real device
+      // because android:usesCleartextTraffic="true" allows HTTP on all IPs).
+      // Only fix genuinely relative paths (no host) by prepending ApiConstants.host.
+      for (final f in fileStoreListModel.fileStoreIds ?? []) {
+        final rawUrl = f.url ?? '';
+        if (rawUrl.isEmpty) continue;
+
+        final parsed = Uri.tryParse(rawUrl);
+        if (parsed != null && !parsed.hasAuthority) {
+          // Relative path — prepend host so it becomes absolute
+          f.url = '${ApiConstants.host}$rawUrl';
+          print('[fetchFiles][ViewAllOrders] Relative URL for id=${f.id}, prepended host: ${f.url}');
+        } else {
+          print('[fetchFiles][ViewAllOrders] id=${f.id}, url=${f.url}');
+        }
+      }
     } else {
-      print('Failed to fetch files: ${res.statusCode} ${res.body}');
+      print('[fetchFiles][ViewAllOrders] Failed: ${res.statusCode} ${res.body}');
     }
 
     return fileStoreListModel?.fileStoreIds;

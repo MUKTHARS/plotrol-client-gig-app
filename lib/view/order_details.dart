@@ -1046,6 +1046,7 @@ class HorizontalImageListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[HorizontalImageListView] Rendering ${imageUrls.length} URLs: $imageUrls');
     return SizedBox(
       height: 150, // Adjust the height as per your requirement
       child: ListView.separated(
@@ -1068,6 +1069,7 @@ class HorizontalImageListView extends StatelessWidget {
                 imageUrls[index],
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
+                  debugPrint('[HorizontalImageListView] ERROR loading ${imageUrls[index]} — $error');
                   return Image.network(
                     ImageAssetsConst.sampleUserProfile,
                     width: 120,

@@ -1,5 +1,6 @@
 // REMOVE this import:
 // import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 // ===== Image Grid Screen =====
@@ -82,6 +83,7 @@ class _ImageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[_ImageTile] Loading image: $url');
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: InkWell(
@@ -93,7 +95,10 @@ class _ImageTile extends StatelessWidget {
             fit: BoxFit.cover,
             // Show a simple skeleton until first frame arrives
             frameBuilder: (context, child, frame, _) {
-              if (frame != null) return child;
+              if (frame != null) {
+                debugPrint('[_ImageTile] Frame loaded for: $url');
+                return child;
+              }
               return Container(
                 color: Colors.grey.shade200,
                 alignment: Alignment.center,
@@ -129,11 +134,14 @@ class _ImageTile extends StatelessWidget {
               );
             },
             // Graceful error
-            errorBuilder: (context, error, stackTrace) => Container(
-              color: Colors.grey.shade200,
-              alignment: Alignment.center,
-              child: const Icon(Icons.broken_image_outlined, size: 36, color: Colors.grey),
-            ),
+            errorBuilder: (context, error, stackTrace) {
+              debugPrint('[_ImageTile] ERROR loading $url — $error');
+              return Container(
+                color: Colors.grey.shade200,
+                alignment: Alignment.center,
+                child: const Icon(Icons.broken_image_outlined, size: 36, color: Colors.grey),
+              );
+            },
             // Optional: downsample thumbnails to save memory/CPU
             cacheWidth: 512,
             cacheHeight: 512,
