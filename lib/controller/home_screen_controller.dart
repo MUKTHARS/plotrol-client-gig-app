@@ -396,13 +396,17 @@ class HomeScreenController extends GetxController {
     String? userUuid = prefs.getString('userUuid');
     UserRequest? userRequest = (userInfoString ?? "").isNotEmpty ? UserRequest.fromJson(jsonDecode(userInfoString!)) : null;
 
-    PgrServiceResponse? result = await _getOrdersRepository.getOrders(
-        AppUtils().checkIsHousehold(userRequest?.roles ?? []) && !AppUtils().checkIsPGRAdmin(userRequest?.roles ?? []) ? {
-      'mobileNumber' : mobileNumber,
-    } : {
-          "fromDate": AppUtils.getDayStartAndEnd().startMillis.toString(),
-          "toDate": AppUtils.getDayStartAndEnd().endMillis.toString(),
-        });
+    final isHousehold = AppUtils().checkIsHousehold(userRequest?.roles ?? []) && !AppUtils().checkIsPGRAdmin(userRequest?.roles ?? []);
+    final isGig = AppUtils().checkIsGig(userRequest?.roles ?? []);
+    logger.i('[getOrdersResult] roles=${userRequest?.roles?.map((r) => r.code).toList()}, isHousehold=$isHousehold, isGig=$isGig, uuid=${userRequest?.uuid}');
+
+    final queryParams = isHousehold ? {'mobileNumber': mobileNumber} : <String, String>{};
+    logger.i('[getOrdersResult] API queryParams=$queryParams');
+
+    PgrServiceResponse? result = await _getOrdersRepository.getOrders(queryParams);
+
+    logger.i('[getOrdersResult] API returned ${result?.serviceWrappers?.length ?? 0} total records');
+
     if ((result?.serviceWrappers ?? []).isNotEmpty) {
 
       getOrderDetails.clear();
@@ -411,14 +415,18 @@ class HomeScreenController extends GetxController {
           ?.where((s) => s.service?.additionalDetail?['appSource'] == 'PLOTROL')
           .toList() ?? [];
 
-      getOrderDetails = AppUtils().checkIsGig(userRequest?.roles ?? [])
-          ? await enrichOrdersWithImageUrls(
-              plotrolOrders
-                  .where((s) => (s.workflow?.assignes ?? []).contains(userRequest?.uuid) ||
-                      s.service?.applicationStatus == "RESOLVED")
-                  .toList(),
-              ApiConstants.tenantId)
-          : await enrichOrdersWithImageUrls(plotrolOrders, ApiConstants.tenantId);
+      logger.i('[getOrdersResult] After PLOTROL filter: ${plotrolOrders.length} records');
+
+      final assignedOrFiltered = isGig
+          ? plotrolOrders.where((s) =>
+              (s.workflow?.assignes ?? []).contains(userRequest?.uuid) ||
+              s.service?.applicationStatus == 'RESOLVED').toList()
+          : plotrolOrders;
+
+      logger.i('[getOrdersResult] After role filter: ${assignedOrFiltered.length} records');
+
+      getOrderDetails = await enrichOrdersWithImageUrls(assignedOrFiltered, ApiConstants.tenantId);
+
       pendingOrders.clear();
       todayOrders.clear();
       otherOrders.clear();
@@ -426,56 +434,49 @@ class HomeScreenController extends GetxController {
       createdOrders.clear();
       activeOrders.clear();
       completedOrders.clear();
+
+      // Start of today: 12:00 AM
       DateTime now = DateTime.now();
-      String today =
-          DateFormat('dd/MM/yyyy').format(now); // Format to match assignDate
-      // Start of the day: 12:00 AM
       DateTime startDateTime = DateTime(now.year, now.month, now.day, 0, 0, 0, 0);
       int startDate = startDateTime.millisecondsSinceEpoch;
-      print("StartDate: ${startDate}");
-      // End of the day: 11:59:59.999 PM
+      // End of today: 11:59:59.999 PM
       DateTime endDateTime = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
       int endDate = endDateTime.millisecondsSinceEpoch;
-      print("EndDate: ${endDate}");
+      logger.i('[getOrdersResult] Today window: $startDate – $endDate');
 
       for (var order in getOrderDetails) {
-        if (order.workflow?.action == 'CREATE') {
-          createdOrders.add(order);
-        }
-        String? assignDate;
-        try {
-          assignDate = AppUtils.timeStampToDate(order.service?.auditDetails?.createdTime);
-        } catch (e) {
-          continue;
-        }
+        final action = order.workflow?.action;
+        final createdTime = order.service?.auditDetails?.createdTime ?? 0;
+        final id = order.service?.serviceRequestId ?? 'unknown';
 
-        if ((order.service?.auditDetails?.createdTime ?? 0) >= startDate && (order.service?.auditDetails?.createdTime ?? 0) <=  endDate ) {
-          todayOrders.add(order);
-        } else {
-          otherOrders.add(order);
-        }
-        if (order.workflow?.action == 'ASSIGN') {
+        // Categorise by workflow action FIRST – must not be inside any try/catch
+        // that can skip via continue.
+        if (action == 'CREATE') {
+          createdOrders.add(order);
+        } else if (action == 'ASSIGN') {
           createdOrders.add(order);
           acceptedOrders.add(order);
-        }
-        // else if (order.orderstatus == 'active') {
-        //   activeOrders.add(order);
-        // }
-        else if (order.workflow?.action == 'RESOLVE') {
+        } else if (action == 'RESOLVE') {
           completedOrders.add(order);
         }
 
-        // else if (order.orderstatus == 'pending') {
-        //   pendingOrders.add(order);
-        // }
+        // Categorise into today vs other (timestamp parsing can fail safely)
+        try {
+          if (createdTime >= startDate && createdTime <= endDate) {
+            todayOrders.add(order);
+          } else {
+            otherOrders.add(order);
+          }
+        } catch (e) {
+          logger.e('[getOrdersResult] Error parsing createdTime for order $id: $e');
+        }
+
+        logger.i('[getOrdersResult] order=$id action=$action status=${order.service?.applicationStatus} createdTime=$createdTime');
       }
-      logger.i('Todays Order : ${todayOrders}');
-      logger.i('Other Orders : ${otherOrders}');
-      logger.i('accepted friends : ${acceptedOrders}');
-      logger.i('active Orders : ${activeOrders}');
-      logger.i('completed orders : ${completedOrders}');
-      logger.i('The whole response : ${getOrderDetails}');
-      logger.i('The Created Orders : ${createdOrders}');
+
+      logger.i('[getOrdersResult] Summary — total=${getOrderDetails.length}, today=${todayOrders.length}, created=${createdOrders.length}, accepted=${acceptedOrders.length}, completed=${completedOrders.length}, other=${otherOrders.length}');
+    } else {
+      logger.w('[getOrdersResult] API returned empty serviceWrappers — no orders loaded');
     }
     isOrderLoading.value = false;
     update();

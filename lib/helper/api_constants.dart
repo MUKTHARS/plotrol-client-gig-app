@@ -47,7 +47,7 @@ class ApiConstants {
   // Local Go backend
   // Android emulator  → use 10.0.2.2 (ADB tunnels it to PC localhost)
   // Real device (WiFi) → use PC's LAN IP (run `ipconfig` to find it)
-  static String host = 'http://localhost:8080';
+  static String host = 'http://10.0.2.2:8080';
   /// authentication
 
   static String fileUpload = '/filestore/v1/files';

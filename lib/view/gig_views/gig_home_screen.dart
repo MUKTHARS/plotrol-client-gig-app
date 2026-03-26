@@ -53,7 +53,7 @@ class GigHomeScreen extends StatelessWidget {
                     onTap: () {
                       Get.to(() => ViewAllOrdersScreen());
                     },
-                    child: (controller.todayOrders.isNotEmpty)
+                    child: (controller.isGigWorker.value ? controller.acceptedOrders.isNotEmpty : controller.createdOrders.isNotEmpty)
                         ? const ReusableTextWidget(
                             text: 'View All',
                             fontWeight: FontWeight.w600,
@@ -72,7 +72,7 @@ class GigHomeScreen extends StatelessWidget {
               OnGoingTask(
                 isVerticalScrollable: true,
                 maxItems: 5,
-                status: controller.isGigWorker.value ? 'accepted' : '',
+                status: controller.isGigWorker.value ? 'accepted' : 'created',
               ),
               SizedBox(
                 height: 2.5.h,
@@ -249,7 +249,33 @@ class OnGoingTask extends StatelessWidget {
         }
 
         if (isVerticalScrollable) {
-          if (status == 'accepted') {
+          if (status == 'created') {
+            if (controller.createdOrders.isEmpty) {
+              return SizedBox(
+                height: Get.height * 0.6,
+                child: const Center(
+                  child: ReusableTextWidget(
+                    text: 'No Tasks Found ☹',
+                    fontSize: 15,
+                  ),
+                ),
+              );
+            }
+            return ListView.builder(
+              physics: isForStatusScreen
+                  ? null
+                  : const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: maxItems != null
+                  ? (controller.createdOrders.length > maxItems!
+                      ? maxItems!
+                      : controller.createdOrders.length)
+                  : controller.createdOrders.length,
+              itemBuilder: (context, index) {
+                return buildOrderItem(controller.createdOrders[index]);
+              },
+            );
+          } else if (status == 'accepted') {
             if (controller.acceptedOrders.isEmpty) {
               return SizedBox(
                 height: Get.height * 0.6,
