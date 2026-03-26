@@ -278,16 +278,52 @@ func (h *PGRHandler) SearchServiceRequests(w http.ResponseWriter, r *http.Reques
 		db = db.Where("tenant_id = ?", tenantId)
 	}
 	if mobileNumber != "" {
+		// Household user: filter by their mobile number and date range (audit_created_time)
 		db = db.Where("mobile_number = ?", mobileNumber)
-	}
-	if fromDateStr != "" {
-		if ms, err := strconv.ParseInt(fromDateStr, 10, 64); err == nil {
-			db = db.Where("audit_last_modified_time >= ?", ms)
+		if fromDateStr != "" {
+			if ms, err := strconv.ParseInt(fromDateStr, 10, 64); err == nil {
+				log.Printf("[pgr] household date filter: audit_created_time >= %d", ms)
+				db = db.Where("audit_created_time >= ?", ms)
+			}
 		}
-	}
-	if toDateStr != "" {
-		if ms, err := strconv.ParseInt(toDateStr, 10, 64); err == nil {
-			db = db.Where("audit_last_modified_time <= ?", ms)
+		if toDateStr != "" {
+			if ms, err := strconv.ParseInt(toDateStr, 10, 64); err == nil {
+				log.Printf("[pgr] household date filter: audit_created_time <= %d", ms)
+				db = db.Where("audit_created_time <= ?", ms)
+			}
+		}
+	} else {
+		// Admin / gig worker: return tasks created in the date range OR all ASSIGNED tasks.
+		// This ensures:
+		//   - Admin sees today's newly created tasks in their dashboard (filtered locally by createdTime)
+		//   - Gig workers see tasks assigned to them even if the assignment happened on a previous day
+		fromMs := int64(0)
+		toMs := int64(0)
+		if fromDateStr != "" {
+			if ms, err := strconv.ParseInt(fromDateStr, 10, 64); err == nil {
+				fromMs = ms
+			}
+		}
+		if toDateStr != "" {
+			if ms, err := strconv.ParseInt(toDateStr, 10, 64); err == nil {
+				toMs = ms
+			}
+		}
+		if fromMs > 0 && toMs > 0 {
+			// Include records created in the date range OR any ASSIGNED/RESOLVED task regardless of age.
+			// - ASSIGNED: gig workers always see outstanding tasks even if assigned before today
+			// - RESOLVED: completed tasks always appear in the Completed tab; the client further
+			//             narrows them by lastModifiedTime so only relevant completions are shown
+			log.Printf("[pgr] admin/gig date filter: (audit_created_time BETWEEN %d AND %d) OR application_status IN (ASSIGNED,RESOLVED)", fromMs, toMs)
+			db = db.Where(
+				"(audit_created_time >= ? AND audit_created_time <= ?) OR application_status IN ?",
+				fromMs, toMs, []string{"ASSIGNED", "RESOLVED"},
+			)
+		} else if fromMs > 0 {
+			db = db.Where(
+				"(audit_created_time >= ?) OR application_status IN ?",
+				fromMs, []string{"ASSIGNED", "RESOLVED"},
+			)
 		}
 	}
 
@@ -297,7 +333,8 @@ func (h *PGRHandler) SearchServiceRequests(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusInternalServerError, errResp("failed to query service requests: "+result.Error.Error()))
 		return
 	}
-	log.Printf("[pgr] SearchServiceRequests found %d records", len(records))
+	log.Printf("[pgr] SearchServiceRequests found %d records (mobileNumber=%q, fromDate=%q, toDate=%q)",
+		len(records), mobileNumber, fromDateStr, toDateStr)
 
 	wrappers := make([]interface{}, 0, len(records))
 	for i := range records {
@@ -389,7 +426,10 @@ func (h *PGRHandler) UpdateServiceRequest(w http.ResponseWriter, r *http.Request
 			if hrms := workflowMap["hrmsAssignes"]; hrms != nil {
 				sr.WorkflowHrmsAssignes = marshalToString(hrms)
 			}
-			log.Printf("[pgr] ASSIGN: assignes=%s", sr.WorkflowAssignes)
+			// Mark as ASSIGNED so the gig worker's search (which ORs on application_status=ASSIGNED)
+			// always returns this task regardless of the date range filter.
+			sr.ApplicationStatus = "ASSIGNED"
+			log.Printf("[pgr] ASSIGN: assignes=%s, setting applicationStatus=ASSIGNED", sr.WorkflowAssignes)
 		case "RESOLVE":
 			sr.ApplicationStatus = "RESOLVED"
 			log.Printf("[pgr] RESOLVE: setting status to RESOLVED")
