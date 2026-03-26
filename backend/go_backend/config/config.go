@@ -24,6 +24,15 @@ func Load() *Config {
 	}
 }
 
+// AdminSetupSecret returns the secret required to call POST /admin/create.
+// Set via ADMIN_SETUP_SECRET env var; defaults to a fixed dev value.
+func (c *Config) AdminSetupSecret() string {
+	if v := os.Getenv("ADMIN_SETUP_SECRET"); v != "" {
+		return v
+	}
+	return "plotrol-admin-setup-2024"
+}
+
 // BaseURL returns the public base URL for this server (used to build file URLs).
 func (c *Config) BaseURL() string {
 	if v := os.Getenv("BASE_URL"); v != "" {

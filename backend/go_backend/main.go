@@ -58,6 +58,7 @@ func main() {
 	propHandler := handlers.NewPropertyHandler(gormDB)
 	fsHandler := handlers.NewFileStoreHandler(gormDB, uploadDir, cfg.BaseURL())
 	pgrHandler := handlers.NewPGRHandler(gormDB)
+	adminHandler := handlers.NewAdminHandler(gormDB, sqlDB, cfg)
 
 	// ─── Gin router ───────────────────────────────────────────────────────────
 	r := gin.Default()
@@ -93,6 +94,20 @@ func main() {
 	r.POST("/pgr-services/v2/request/_create", gin.WrapF(pgrHandler.CreateServiceRequest))
 	r.POST("/pgr-services/v2/request/_search", gin.WrapF(pgrHandler.SearchServiceRequests))
 	r.POST("/pgr-services/v2/request/_update", gin.WrapF(pgrHandler.UpdateServiceRequest))
+
+	// Employee search & management (admin assigns gig workers)
+	r.POST("/egov-hrms/employees/_search", gin.WrapF(adminHandler.SearchEmployees))
+	r.POST("/egov-hrms/employees/_update", gin.WrapF(adminHandler.UpdateEmployee))
+	r.POST("/egov-hrms/employees/_deactivate", gin.WrapF(adminHandler.DeactivateEmployee))
+
+	// User profile search (used by HomeScreenController.getTenantApiFunction)
+	r.POST("/user/_search", gin.WrapF(adminHandler.UserSearch))
+
+	// Admin-only routes
+	r.POST("/admin/create", gin.WrapF(adminHandler.CreateAdminUser))
+	r.GET("/admin/dashboard/stats", gin.WrapF(adminHandler.GetAdminDashboardStats))
+	r.POST("/admin/orders/_search", gin.WrapF(adminHandler.GetAdminOrders))
+	r.GET("/admin/gig-workers/orders", gin.WrapF(adminHandler.GetGigWorkerOrders))
 
 	// Debug catch-all
 	r.NoRoute(func(c *gin.Context) {
