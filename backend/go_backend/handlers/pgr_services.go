@@ -310,19 +310,26 @@ func (h *PGRHandler) SearchServiceRequests(w http.ResponseWriter, r *http.Reques
 			}
 		}
 		if fromMs > 0 && toMs > 0 {
-			// Include records created in the date range OR any ASSIGNED/RESOLVED task regardless of age.
-			// - ASSIGNED: gig workers always see outstanding tasks even if assigned before today
-			// - RESOLVED: completed tasks always appear in the Completed tab; the client further
-			//             narrows them by lastModifiedTime so only relevant completions are shown
-			log.Printf("[pgr] admin/gig date filter: (audit_created_time BETWEEN %d AND %d) OR application_status IN (ASSIGNED,RESOLVED)", fromMs, toMs)
+			// Three-way OR to give every role what it needs:
+			//  1. Tasks CREATED within the date range  → admin "today" view, household user orders
+			//  2. All ASSIGNED tasks regardless of age → gig worker always sees their workload
+			//  3. Tasks RESOLVED within the date range → completed page (resolved tasks within the selected window)
+			//     We use audit_last_modified_time for RESOLVED because that timestamp records when the task was completed.
+			log.Printf("[pgr] admin/gig filter: created[%d-%d] OR ASSIGNED OR (RESOLVED AND modified[%d-%d])",
+				fromMs, toMs, fromMs, toMs)
 			db = db.Where(
-				"(audit_created_time >= ? AND audit_created_time <= ?) OR application_status IN ?",
-				fromMs, toMs, []string{"ASSIGNED", "RESOLVED"},
+				"(audit_created_time >= ? AND audit_created_time <= ?) OR application_status = ? OR (application_status = ? AND audit_last_modified_time >= ? AND audit_last_modified_time <= ?)",
+				fromMs, toMs,
+				"ASSIGNED",
+				"RESOLVED", fromMs, toMs,
 			)
 		} else if fromMs > 0 {
+			log.Printf("[pgr] admin/gig filter: created >= %d OR ASSIGNED OR (RESOLVED AND modified >= %d)", fromMs, fromMs)
 			db = db.Where(
-				"(audit_created_time >= ?) OR application_status IN ?",
-				fromMs, []string{"ASSIGNED", "RESOLVED"},
+				"(audit_created_time >= ?) OR application_status = ? OR (application_status = ? AND audit_last_modified_time >= ?)",
+				fromMs,
+				"ASSIGNED",
+				"RESOLVED", fromMs,
 			)
 		}
 	}

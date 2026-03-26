@@ -399,8 +399,6 @@ class HomeScreenController extends GetxController {
     PgrServiceResponse? result = await _getOrdersRepository.getOrders(
         AppUtils().checkIsHousehold(userRequest?.roles ?? []) && !AppUtils().checkIsPGRAdmin(userRequest?.roles ?? []) ? {
       'mobileNumber' : mobileNumber,
-      "fromDate": AppUtils.getDayStartAndEnd().startMillis.toString(),
-      "toDate": AppUtils.getDayStartAndEnd().endMillis.toString(),
     } : {
           "fromDate": AppUtils.getDayStartAndEnd().startMillis.toString(),
           "toDate": AppUtils.getDayStartAndEnd().endMillis.toString(),

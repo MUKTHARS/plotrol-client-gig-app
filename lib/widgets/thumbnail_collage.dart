@@ -18,7 +18,7 @@ class ThumbCollage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final display = urls.take(5).toList();
+    final display = urls.where((u) => u.isNotEmpty && (u.startsWith('http://') || u.startsWith('https://'))).take(5).toList();
     final extra = urls.length - display.length;
 
     // If no images, show a neutral placeholder

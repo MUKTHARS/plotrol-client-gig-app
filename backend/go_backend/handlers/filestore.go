@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +16,31 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+// rewriteFileURL replaces the host in a stored URL with the host that the
+// client actually used to reach us.  This is critical for Android emulators
+// (host = 10.0.2.2) and real devices on Wi-Fi (host = LAN IP) because the
+// backend is started with BASE_URL=http://localhost:8080 by default, so
+// stored URLs contain "localhost" which is unreachable from any non-host OS.
+func rewriteFileURL(storedURL, requestHost string) string {
+	if storedURL == "" || requestHost == "" {
+		return storedURL
+	}
+	u, err := url.Parse(storedURL)
+	if err != nil {
+		log.Printf("[filestore] rewriteFileURL: cannot parse %q: %v", storedURL, err)
+		return storedURL
+	}
+	// Only rewrite when the stored URL points to localhost / 127.0.0.1
+	h := strings.ToLower(u.Hostname())
+	if h == "localhost" || h == "127.0.0.1" {
+		original := u.Host
+		u.Host = requestHost
+		log.Printf("[filestore] rewriteFileURL: %q -> %q (host %s -> %s)", storedURL, u.String(), original, requestHost)
+		return u.String()
+	}
+	return storedURL
+}
 
 // FileStoreHandler handles file upload and URL fetch.
 type FileStoreHandler struct {
@@ -124,26 +151,39 @@ func (h *FileStoreHandler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 
 // GET /filestore/v1/files/url?tenantId=mz&fileStoreIds=id1,id2
 func (h *FileStoreHandler) GetFileURLs(w http.ResponseWriter, r *http.Request) {
+	log.Println("[filestore] === GetFileURLs called ===")
+	log.Printf("[filestore] RequestHost=%q URL=%s", r.Host, r.URL.String())
+
 	rawIds := r.URL.Query().Get("fileStoreIds")
 	if rawIds == "" {
+		log.Println("[filestore] GetFileURLs: no fileStoreIds param, returning empty list")
 		writeJSON(w, http.StatusOK, map[string]interface{}{"fileStoreIds": []interface{}{}})
 		return
 	}
 
 	ids := strings.Split(rawIds, ",")
+	log.Printf("[filestore] GetFileURLs: querying %d IDs: %v", len(ids), ids)
+
 	var records []dbpkg.FileStore
 	h.gdb.Where("file_store_id IN ?", ids).Find(&records)
+	log.Printf("[filestore] GetFileURLs: found %d DB records for %d requested IDs", len(records), len(ids))
 
 	list := make([]map[string]interface{}, 0, len(records))
 	for _, rec := range records {
+		// Rewrite the stored URL so the device can reach the file.
+		// Stored URLs have "localhost" (from BASE_URL default); the device
+		// (emulator or real phone) must use the actual host it connected to.
+		rewritten := rewriteFileURL(rec.URL, r.Host)
+		log.Printf("[filestore] GetFileURLs: id=%s storedURL=%q returnURL=%q", rec.FileStoreId, rec.URL, rewritten)
 		list = append(list, map[string]interface{}{
 			"fileStoreId": rec.FileStoreId,
 			"name":        rec.Name,
 			"tenantId":    rec.TenantID,
 			"id":          rec.FileStoreId,
-			"url":         rec.URL,
+			"url":         rewritten,
 		})
 	}
 
+	log.Printf("[filestore] GetFileURLs: returning %d file records", len(list))
 	writeJSON(w, http.StatusOK, map[string]interface{}{"fileStoreIds": list})
 }

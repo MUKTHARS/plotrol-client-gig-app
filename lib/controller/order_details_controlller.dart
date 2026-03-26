@@ -348,7 +348,7 @@ class OrderDetailsController extends GetxController {
         // "userUuid": [order?.workflow?.assignes?.first]
         "codes": "PLOTHELPDESK"
       });
-      assignedStaff = assignee?.employees.first;
+      assignedStaff = (assignee?.employees ?? []).isNotEmpty ? assignee!.employees.first : null;
       isAssigneesLoading.value = false;
       update();
     }

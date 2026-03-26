@@ -79,10 +79,10 @@ class Profile extends StatelessWidget {
                                 fit: BoxFit.cover,
                               ),
                             ) :
-                            ReusableTextWidget(
-                              text: '${authenticationController.firstName.value} ${authenticationController.lastName.value}',
-                              fontSize: 40,
-                              fontWeight: FontWeight.w600,
+                            const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.white,
                             ),
                           ),
                           const SizedBox(width: 10,),

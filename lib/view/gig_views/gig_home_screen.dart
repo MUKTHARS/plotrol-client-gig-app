@@ -67,9 +67,12 @@ class GigHomeScreen extends StatelessWidget {
               SizedBox(
                 height: 1.h,
               ),
+              // Gig workers see their accepted/assigned tasks regardless of when
+              // they were assigned. Admins see today's newly created tasks.
               OnGoingTask(
                 isVerticalScrollable: true,
                 maxItems: 5,
+                status: controller.isGigWorker.value ? 'accepted' : '',
               ),
               SizedBox(
                 height: 2.5.h,

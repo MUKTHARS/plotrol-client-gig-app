@@ -17,7 +17,7 @@ class OngoingTaskScreen extends StatelessWidget {
           automaticallyImplyLeading: false,
           backgroundColor: Colors.white,
           title: const ReusableTextWidget(
-            text: 'Completed Tasks',
+            text: 'Ongoing Tasks',
             fontSize: 21,
             fontWeight: FontWeight.w700,
           ),
@@ -29,7 +29,7 @@ class OngoingTaskScreen extends StatelessWidget {
               child: OnGoingTask(
                 isVerticalScrollable: true,
                 isForStatusScreen: true,
-                status: 'completed',
+                status: 'created',
               )),
         ),
       ),

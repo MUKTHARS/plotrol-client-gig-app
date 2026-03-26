@@ -84,6 +84,8 @@ class HomeScreen extends StatelessWidget {
                     !AppUtils().checkIsPGRAdmin(userRequest.roles ?? []);
 
             controller.getTenantApiFunction();
+            // Load orders for all user types so "Ongoing Task" section is populated.
+            controller.getOrdersApiFunction();
 
             if (AppUtils().checkIsHousehold(userRequest.roles ?? []) &&
                 !AppUtils().checkIsPGRAdmin(userRequest.roles ?? [])) {
@@ -685,6 +687,13 @@ class OnGoingTask extends StatelessWidget {
         });
       },
       builder: (controller) {
+        if (homeScreenController.isOrderLoading.value) {
+          return SizedBox(
+            height: MediaQuery.of(context).size.height / 3,
+            child: buildShimmerLoader(),
+          );
+        }
+
         if (homeScreenController.getOrderDetails.isEmpty) {
           return SizedBox(
             height: MediaQuery.of(context).size.height / 3,
@@ -694,13 +703,6 @@ class OnGoingTask extends StatelessWidget {
                 fontSize: 15,
               ),
             ),
-          );
-        }
-
-        if (homeScreenController.isOrderLoading.value) {
-          return SizedBox(
-            height: MediaQuery.of(context).size.height / 3,
-            child: buildShimmerLoader(),
           );
         }
 
