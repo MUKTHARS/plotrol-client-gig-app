@@ -401,6 +401,7 @@ class PropertyWidget extends StatelessWidget {
                                         '${controller.getPropertiesDetails[index].additionalFields?.fields?.where((a) => a.key == 'notes').first.value}',
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
+                                    maxLines: 1,
                                   ),
                                 ),
                                 const SizedBox(
