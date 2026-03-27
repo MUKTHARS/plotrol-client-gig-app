@@ -169,8 +169,8 @@ class Workflow {
 
   Workflow.fromJson(Map<String, dynamic> json) {
     action = json['action'];
-    assignes = (json['assignes'] as List?)?.map((e) => e as String).toList() ?? [];
-    hrmsAssignes = (json['hrmsAssignes'] as List?)?.map((e) => e as String).toList() ?? [];
+    assignes = (json['assignes'] as List?)?.map((e) => e as String?).toList() ?? [];
+    hrmsAssignes = (json['hrmsAssignes'] as List?)?.map((e) => e as String?).toList() ?? [];
     comments = json['comments'];
     verificationDocuments = (json['verificationDocuments'] as List?)?.map((e) => e as String?).toList();
   }

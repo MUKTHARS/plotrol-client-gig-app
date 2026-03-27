@@ -310,23 +310,24 @@ func (h *PGRHandler) SearchServiceRequests(w http.ResponseWriter, r *http.Reques
 			}
 		}
 		if fromMs > 0 && toMs > 0 {
-			// Two-way OR:
-			//  1. Tasks CREATED within the date range → covers all statuses including RESOLVED
+			// Three-way OR:
+			//  1. Tasks CREATED within the date range (all statuses)
 			//  2. All ASSIGNED tasks regardless of age → gig worker always sees their workload
-			// Using audit_created_time for RESOLVED ensures tasks created in the selected
-			// period always appear on the completed tab, regardless of when they were resolved.
-			log.Printf("[pgr] admin/gig filter: created[%d-%d] OR ASSIGNED", fromMs, toMs)
+			//  3. RESOLVED tasks whose lastModifiedTime (= resolve time) falls in range
+			log.Printf("[pgr] admin/gig filter: created[%d-%d] OR ASSIGNED OR RESOLVED modified[%d-%d]", fromMs, toMs, fromMs, toMs)
 			db = db.Where(
-				"(audit_created_time >= ? AND audit_created_time <= ?) OR application_status = ?",
+				"(audit_created_time >= ? AND audit_created_time <= ?) OR application_status = ? OR (application_status = ? AND audit_last_modified_time >= ? AND audit_last_modified_time <= ?)",
 				fromMs, toMs,
 				"ASSIGNED",
+				"RESOLVED", fromMs, toMs,
 			)
 		} else if fromMs > 0 {
-			log.Printf("[pgr] admin/gig filter: created >= %d OR ASSIGNED", fromMs)
+			log.Printf("[pgr] admin/gig filter: created >= %d OR ASSIGNED OR RESOLVED modified >= %d", fromMs, fromMs)
 			db = db.Where(
-				"(audit_created_time >= ?) OR application_status = ?",
+				"(audit_created_time >= ?) OR application_status = ? OR (application_status = ? AND audit_last_modified_time >= ?)",
 				fromMs,
 				"ASSIGNED",
+				"RESOLVED", fromMs,
 			)
 		}
 	}

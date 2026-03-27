@@ -448,51 +448,33 @@ class OrderDetailsController extends GetxController {
             : null;
         service?.applicationStatus = order.service?.applicationStatus;
         service?.auditDetails = auditDetails;
-        workflow?.action =
-        order.service?.applicationStatus == "PENDING_ASSIGNMENT" &&
-            AppUtils().checkIsGig(user.roles ?? [])
-            ? "RESOLVE"
-            : "ASSIGN";
-        workflow?.assignes =
-        order.service?.applicationStatus == "PENDING_ASSIGNMENT" &&
-            AppUtils().checkIsGig(user.roles ?? [])
+        final bool isGig = AppUtils().checkIsGig(user.roles ?? []);
+        workflow?.action = isGig ? "RESOLVE" : "ASSIGN";
+        workflow?.assignes = isGig
             ? null
             : selectedAssignee?.user?.userServiceUuid != null
-            ? [selectedAssignee?.user?.userServiceUuid]
-            : [];
-        service?.additionalDetail =
-        AppUtils().checkIsGig(user.roles ?? []) ? service.additionalDetail !=
-            null
+                ? [selectedAssignee?.user?.userServiceUuid]
+                : [];
+        service?.additionalDetail = isGig
             ? {
-              ...additionalDetailMap,
-              if (uploadedImageList.isNotEmpty)
-                "checklist":  selectedCheckBoxItems.join("|").toString(),
-              "unableToLocateProperty": isUTL ,
-              "remarks": remarksCtrl.value ?? '',
-              "appSource": "PLOTROL",
-              if (uploadedImageList.isNotEmpty)
-                ...Map.fromEntries(
-                  uploadedImageList.asMap().entries.map(
-                        (entry) => MapEntry(
-                      'report_${entry.key + 1}',
-                      entry.value,
+                ...additionalDetailMap,
+                if (uploadedImageList.isNotEmpty)
+                  "checklist": selectedCheckBoxItems.join("|").toString(),
+                "unableToLocateProperty": isUTL,
+                "remarks": remarksCtrl.value ?? '',
+                "appSource": "PLOTROL",
+                if (uploadedImageList.isNotEmpty)
+                  ...Map.fromEntries(
+                    uploadedImageList.asMap().entries.map(
+                          (entry) => MapEntry(
+                        'report_${entry.key + 1}',
+                        entry.value,
+                      ),
                     ),
                   ),
-                ),
-            }
-            : {
-          if (uploadedImageList.isNotEmpty)
-            "checklist":  selectedCheckBoxItems.join("|").toString(),
-          "unableToLocateProperty": isUTL ,
-          "remarks": remarksCtrl.value ?? '',
-          "appSource": "PLOTROL",
-
-        } : order.service?.additionalDetail;
-        workflow?.hrmsAssignes =
-        order.service?.applicationStatus == "PENDING_ASSIGNMENT" &&
-            AppUtils().checkIsGig(user.roles ?? [])
-            ? null
-            : [selectedAssignee?.user?.uuid];
+              }
+            : order.service?.additionalDetail;
+        workflow?.hrmsAssignes = isGig ? null : [selectedAssignee?.user?.uuid];
         PgrServiceResponse? result =
         await updatePropertiesRepository.updateBooking(ServiceWrapper(
           service: service,

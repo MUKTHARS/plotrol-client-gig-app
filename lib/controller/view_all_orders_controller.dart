@@ -172,20 +172,18 @@ class ViewAllOrdersController extends GetxController with GetTickerProviderState
     update();
   }
 
-  // Filter orders by date.
-  // For completed orders: use createdTime — the backend returns resolved tasks
-  // that were CREATED in the range, so we match that criterion here.
-  // For all other orders: use lastModifiedTime (keeps recently active tasks).
+  // Filter orders by lastModifiedTime.
+  // ASSIGNED tasks bypass the filter — the backend always returns them so gig
+  // workers see their full workload regardless of when the assignment occurred.
+  // All other statuses (including RESOLVED) use lastModifiedTime, consistent
+  // with the backend which returns RESOLVED tasks by their resolve (modified) time.
   List<ServiceWrapper> filterOrdersByLastModifiedDate(
     List<ServiceWrapper> orders,
     int fromMillis,
     int toMillis,
   ) {
     return orders.where((order) {
-      if (order.service?.applicationStatus == 'RESOLVED') {
-        final createdTime = order.service?.auditDetails?.createdTime ?? 0;
-        return createdTime >= fromMillis && createdTime <= toMillis;
-      }
+      if (order.service?.applicationStatus == 'ASSIGNED') return true;
       final lastModifiedTime = order.service?.auditDetails?.lastModifiedTime ?? 0;
       return lastModifiedTime >= fromMillis && lastModifiedTime <= toMillis;
     }).toList();
