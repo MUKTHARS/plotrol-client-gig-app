@@ -345,8 +345,7 @@ class OrderDetailsController extends GetxController {
     if ((order?.workflow?.assignes ?? []).isNotEmpty) {
       isAssigneesLoading.value = true;
       EmployeeResponse? assignee = await assigneesRepository.getAssignees({
-        // "userUuid": [order?.workflow?.assignes?.first]
-        "codes": "PLOTHELPDESK"
+        "uuid": order?.workflow?.assignes?.first,
       });
       assignedStaff = (assignee?.employees ?? []).isNotEmpty ? assignee!.employees.first : null;
       isAssigneesLoading.value = false;
