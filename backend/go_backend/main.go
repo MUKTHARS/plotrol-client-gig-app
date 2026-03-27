@@ -64,8 +64,8 @@ func main() {
 	r := gin.Default()
 	r.Use(corsMiddleware())
 
-	// Serve uploaded files statically
-	r.Static("/files", uploadDir)
+	// Serve files from database (binary data stored in file_data column)
+	r.GET("/files/:filename", gin.WrapF(fsHandler.ServeFile))
 
 	// Auth
 	r.POST("/user/oauth/token", gin.WrapF(authHandler.Login))

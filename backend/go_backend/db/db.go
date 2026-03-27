@@ -161,6 +161,7 @@ type FileStore struct {
 	Module      string    `gorm:"column:module"`
 	FilePath    string    `gorm:"column:file_path"`
 	URL         string    `gorm:"column:url;type:text"`
+	FileData    []byte    `gorm:"column:file_data;type:bytea"`
 	CreatedAt   time.Time
 }
 

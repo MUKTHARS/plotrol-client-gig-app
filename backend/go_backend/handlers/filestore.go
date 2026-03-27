@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,14 +18,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// rewriteFileURL always replaces the host in a stored URL with the host that
-// the client actually used to reach us. This handles every scenario:
-//   - BASE_URL=http://localhost:8080  (default dev setup)
-//   - BASE_URL changed between uploads (IP changed, different network)
-//   - Emulator (10.0.2.2) vs real device (LAN IP) vs any other host
-//
-// Because the file is always stored on THIS server, whatever host the client
-// used to call us is always the correct host to serve the file from.
+// rewriteFileURL replaces the host in an absolute stored URL with the host
+// the client used to reach us. Relative paths (no scheme/host) are returned
+// unchanged — the client will prepend its own configured host.
 func rewriteFileURL(storedURL, requestHost string) string {
 	if storedURL == "" || requestHost == "" {
 		return storedURL
@@ -34,8 +30,12 @@ func rewriteFileURL(storedURL, requestHost string) string {
 		log.Printf("[filestore] rewriteFileURL: cannot parse %q: %v", storedURL, err)
 		return storedURL
 	}
-	// Always rewrite — regardless of what host was stored — to the current
-	// request host so the client can always reach the file.
+	// Relative path (no scheme or host) — let the client resolve it using its
+	// own configured host. Returning it unchanged is the safe choice.
+	if u.Scheme == "" || u.Host == "" {
+		return storedURL
+	}
+	// Absolute URL: rewrite host to the current request host.
 	if u.Host != requestHost {
 		original := u.Host
 		u.Host = requestHost
@@ -87,53 +87,46 @@ func (h *FileStoreHandler) UploadFiles(w http.ResponseWriter, r *http.Request) {
 	results := make([]map[string]interface{}, 0, len(files))
 
 	for _, fh := range files {
-		// Generate a unique store ID
-		storeId := uuid.New().String()
+		src, err := fh.Open()
+		if err != nil {
+			log.Printf("[filestore] UploadFiles: cannot open file %s: %v", fh.Filename, err)
+			continue
+		}
+		fileData, err := io.ReadAll(src)
+		src.Close()
+		if err != nil {
+			log.Printf("[filestore] UploadFiles: cannot read file %s: %v", fh.Filename, err)
+			continue
+		}
 
-		// Preserve original extension
+		// Generate a unique store ID and build the URL path
+		storeId := uuid.New().String()
 		ext := filepath.Ext(fh.Filename)
 		if ext == "" {
 			ext = ".bin"
 		}
 		storedName := storeId + ext
-		destPath := filepath.Join(h.uploadDir, storedName)
 
-		src, err := fh.Open()
-		if err != nil {
-			continue
-		}
-
-		dst, err := os.Create(destPath)
-		if err != nil {
-			src.Close()
-			continue
-		}
-
-		if _, err := io.Copy(dst, src); err != nil {
-			src.Close()
-			dst.Close()
-			continue
-		}
-		src.Close()
-		dst.Close()
-
-		// Store the URL using baseURL (canonical form in DB).
-		// The URL is always rewritten at fetch time using the request host,
-		// so the stored value is just a reference — the path is what matters.
-		storedURL := fmt.Sprintf("%s/files/%s", strings.TrimRight(h.baseURL, "/"), storedName)
+		// Store only the relative path — no IP or host is ever saved.
+		// The client prepends its own configured host at fetch time.
+		storedURL := "/files/" + storedName
 
 		rec := dbpkg.FileStore{
 			FileStoreId: storeId,
 			Name:        fh.Filename,
 			TenantID:    tenantId,
 			Module:      module,
-			FilePath:    destPath,
+			FilePath:    storedName, // kept as reference only
 			URL:         storedURL,
+			FileData:    fileData,  // binary stored in DB
 		}
-		h.gdb.Create(&rec)
+		if err := h.gdb.Create(&rec).Error; err != nil {
+			log.Printf("[filestore] UploadFiles: DB insert failed for %s: %v", fh.Filename, err)
+			continue
+		}
+		log.Printf("[filestore] UploadFiles: saved %s (%d bytes) as id=%s", fh.Filename, len(fileData), storeId)
 
-		// Return a URL rewritten to the current request host so the uploader
-		// can immediately access the file from whatever device they're on.
+		// Return URL rewritten to current request host
 		responseURL := rewriteFileURL(storedURL, r.Host)
 		results = append(results, map[string]interface{}{
 			"fileStoreId": storeId,
@@ -193,4 +186,56 @@ func (h *FileStoreHandler) GetFileURLs(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[filestore] GetFileURLs: returning %d file records", len(list))
 	writeJSON(w, http.StatusOK, map[string]interface{}{"fileStoreIds": list})
+}
+
+// GET /files/:uuid.ext
+// Serves file binary data stored in the database.
+func (h *FileStoreHandler) ServeFile(w http.ResponseWriter, r *http.Request) {
+	// Extract filename from path: /files/uuid.ext
+	filename := filepath.Base(r.URL.Path)
+	if filename == "" || filename == "." {
+		http.NotFound(w, r)
+		return
+	}
+
+	ext := filepath.Ext(filename)
+	fileStoreId := strings.TrimSuffix(filename, ext)
+
+	log.Printf("[filestore] ServeFile: id=%s ext=%s", fileStoreId, ext)
+
+	var rec dbpkg.FileStore
+	if err := h.gdb.Where("file_store_id = ?", fileStoreId).First(&rec).Error; err != nil {
+		log.Printf("[filestore] ServeFile: id=%s not found in DB: %v", fileStoreId, err)
+		http.NotFound(w, r)
+		return
+	}
+
+	fileData := rec.FileData
+	if len(fileData) == 0 {
+		// Fallback: binary may not have been stored in DB yet (legacy uploads
+		// written to disk before the DB-binary approach was introduced).
+		diskPath := filepath.Join(h.uploadDir, rec.FilePath)
+		data, err := os.ReadFile(diskPath)
+		if err != nil {
+			log.Printf("[filestore] ServeFile: id=%s — no binary in DB and disk read failed (%s): %v", fileStoreId, diskPath, err)
+			http.Error(w, "file data not available", http.StatusNotFound)
+			return
+		}
+		log.Printf("[filestore] ServeFile: id=%s — served from disk fallback (%s)", fileStoreId, diskPath)
+		fileData = data
+	}
+
+	// Detect content type from extension, fallback to sniffing bytes
+	contentType := mime.TypeByExtension(ext)
+	if contentType == "" {
+		contentType = http.DetectContentType(fileData)
+	}
+
+	log.Printf("[filestore] ServeFile: serving id=%s name=%s size=%d contentType=%s", fileStoreId, rec.Name, len(fileData), contentType)
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileData)))
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.WriteHeader(http.StatusOK)
+	w.Write(fileData)
 }
