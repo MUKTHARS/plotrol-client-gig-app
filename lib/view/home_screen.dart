@@ -781,9 +781,7 @@ class OnGoingTask extends StatelessWidget {
               },
             );
           } else if (status == 'completed') {
-            final completedList = isForStatusScreen
-                ? controller.todayCompletedOrders
-                : controller.completedOrders;
+            final completedList = controller.completedOrders;
             if (completedList.isEmpty) {
               return SizedBox(
                 height: Get.height * 0.6,

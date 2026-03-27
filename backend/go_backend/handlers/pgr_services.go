@@ -310,26 +310,23 @@ func (h *PGRHandler) SearchServiceRequests(w http.ResponseWriter, r *http.Reques
 			}
 		}
 		if fromMs > 0 && toMs > 0 {
-			// Three-way OR to give every role what it needs:
-			//  1. Tasks CREATED within the date range  → admin "today" view, household user orders
+			// Two-way OR:
+			//  1. Tasks CREATED within the date range → covers all statuses including RESOLVED
 			//  2. All ASSIGNED tasks regardless of age → gig worker always sees their workload
-			//  3. Tasks RESOLVED within the date range → completed page (resolved tasks within the selected window)
-			//     We use audit_last_modified_time for RESOLVED because that timestamp records when the task was completed.
-			log.Printf("[pgr] admin/gig filter: created[%d-%d] OR ASSIGNED OR (RESOLVED AND modified[%d-%d])",
-				fromMs, toMs, fromMs, toMs)
+			// Using audit_created_time for RESOLVED ensures tasks created in the selected
+			// period always appear on the completed tab, regardless of when they were resolved.
+			log.Printf("[pgr] admin/gig filter: created[%d-%d] OR ASSIGNED", fromMs, toMs)
 			db = db.Where(
-				"(audit_created_time >= ? AND audit_created_time <= ?) OR application_status = ? OR (application_status = ? AND audit_last_modified_time >= ? AND audit_last_modified_time <= ?)",
+				"(audit_created_time >= ? AND audit_created_time <= ?) OR application_status = ?",
 				fromMs, toMs,
 				"ASSIGNED",
-				"RESOLVED", fromMs, toMs,
 			)
 		} else if fromMs > 0 {
-			log.Printf("[pgr] admin/gig filter: created >= %d OR ASSIGNED OR (RESOLVED AND modified >= %d)", fromMs, fromMs)
+			log.Printf("[pgr] admin/gig filter: created >= %d OR ASSIGNED", fromMs)
 			db = db.Where(
-				"(audit_created_time >= ?) OR application_status = ? OR (application_status = ? AND audit_last_modified_time >= ?)",
+				"(audit_created_time >= ?) OR application_status = ?",
 				fromMs,
 				"ASSIGNED",
-				"RESOLVED", fromMs,
 			)
 		}
 	}
