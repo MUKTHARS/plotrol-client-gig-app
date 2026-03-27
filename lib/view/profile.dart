@@ -10,6 +10,7 @@ import '../controller/create_account_controller.dart';
 import '../controller/home_screen_controller.dart';
 import '../globalWidgets/text_widget.dart';
 import '../helper/const_assets_const.dart';
+import 'add_helpdesk_user_screen.dart';
 
 class Profile extends StatelessWidget {
   Profile({super.key});
@@ -163,6 +164,20 @@ class Profile extends StatelessWidget {
                       //     // Handle settings action
                       //   },
                       // ),
+
+                      // Add Users (admin only)
+                      if (controller.isPGRAdmin.value)
+                        ListTile(
+                          leading: const Icon(Icons.person_add, color: Colors.black),
+                          title: const ReusableTextWidget(
+                            text: 'Add Users',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          onTap: () {
+                            Get.to(() => AddHelpdeskUserScreen());
+                          },
+                        ),
 
                       // Logout
                       ListTile(

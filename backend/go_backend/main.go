@@ -105,6 +105,7 @@ func main() {
 
 	// Admin-only routes
 	r.POST("/admin/create", gin.WrapF(adminHandler.CreateAdminUser))
+	r.POST("/admin/helpdesk-users/_create", gin.WrapF(adminHandler.CreateHelpdeskUser))
 	r.GET("/admin/dashboard/stats", gin.WrapF(adminHandler.GetAdminDashboardStats))
 	r.POST("/admin/orders/_search", gin.WrapF(adminHandler.GetAdminOrders))
 	r.GET("/admin/gig-workers/orders", gin.WrapF(adminHandler.GetGigWorkerOrders))

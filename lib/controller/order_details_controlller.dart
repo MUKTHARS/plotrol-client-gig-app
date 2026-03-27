@@ -375,25 +375,11 @@ class OrderDetailsController extends GetxController {
     bool isHelpDeskUser = AppUtils().checkIsGig(userRequest?.roles ?? []);
     bool isDistributor = AppUtils().checkIsHousehold(userRequest?.roles ?? []);
     EmployeeResponse? employeeResponse =
-        await assigneesRepository.getAssignees(isHelpDeskUser || isDistributor
-            ? {
-                // "userUuid": [order?.workflow?.assignes?.first]
-                "codes": "PLOTHELPDESK"
-              }
-            : {"roles": "HELPDESK_USER"});
+        await assigneesRepository.getAssignees({"roles": "HELPDESK_USER"});
 
     List<Employee>? filteredEmployees =
         employeeResponse?.employees.where((employee) {
-      final hasValidAssignment = (employee.assignments.isNotEmpty ?? false) &&
-          employee.assignments.any((assignment) =>
-              assignment.department != null &&
-              assignment.designation != null &&
-              assignment.department == "eGov");
-
-      final hasValidUser =
-          employee.user?.userServiceUuid != null && employee.user?.uuid != null;
-
-      return hasValidAssignment && hasValidUser;
+      return employee.user?.uuid != null && (employee.isActive ?? true);
     }).toList();
 
     if (filteredEmployees != null && filteredEmployees.isNotEmpty) {

@@ -834,6 +834,125 @@ func (h *AdminHandler) GetGigWorkerOrders(w http.ResponseWriter, r *http.Request
 	})
 }
 
+// ─── CreateHelpdeskUser ───────────────────────────────────────────────────────
+
+// CreateHelpdeskUser handles POST /admin/helpdesk-users/_create
+//
+// Called from the admin profile "Add Users" screen to create a new gig worker
+// (HELPDESK_USER role) without needing direct DB access.
+//
+// Body: {
+//   "name":         "John Doe",
+//   "mobileNumber": "9876543210",
+//   "emailId":      "john@example.com",  // optional
+//   "password":     "secret123",
+//   "tenantId":     "mz"                 // optional, defaults to mz
+// }
+// Response: { "code": 200, "status": true, "message": "...", "uuid": "..." }
+func (h *AdminHandler) CreateHelpdeskUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("[admin] === CreateHelpdeskUser called ===")
+
+	var body map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"code": 400, "status": false, "message": "Invalid JSON: " + err.Error(),
+		})
+		return
+	}
+
+	mobile := strings.TrimSpace(strVal(body["mobileNumber"]))
+	name := strings.TrimSpace(strVal(body["name"]))
+	email := strings.TrimSpace(strVal(body["emailId"]))
+	password := strVal(body["password"])
+	tenantID := strVal(body["tenantId"])
+
+	if mobile == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"code": 400, "status": false, "message": "mobileNumber is required",
+		})
+		return
+	}
+	if name == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"code": 400, "status": false, "message": "name is required",
+		})
+		return
+	}
+	if password == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"code": 400, "status": false, "message": "password is required",
+		})
+		return
+	}
+	if tenantID == "" {
+		tenantID = "mz"
+	}
+
+	// Check duplicate mobile
+	var existing dbpkg.User
+	if err := h.gdb.Where("mobile_number = ?", mobile).First(&existing).Error; err == nil {
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"code": 409, "status": false, "message": "Mobile number already registered",
+		})
+		return
+	}
+
+	// Check duplicate email if provided
+	if email != "" {
+		if err := h.gdb.Where("email_id = ?", email).First(&existing).Error; err == nil {
+			writeJSON(w, http.StatusOK, map[string]interface{}{
+				"code": 409, "status": false, "message": "Email already registered",
+			})
+			return
+		}
+	}
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Printf("[admin] CreateHelpdeskUser: bcrypt error: %v", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"code": 500, "status": false, "message": "Failed to hash password",
+		})
+		return
+	}
+
+	newUUID := uuid.New().String()
+	u := &dbpkg.User{
+		UUID:         newUUID,
+		UserName:     mobile,
+		TenantID:     tenantID,
+		RoleCode:     "HELPDESK_USER",
+		RoleName:     "Helpdesk User",
+		Type:         "EMPLOYEE",
+		Active:       true,
+		PasswordHash: string(hashed),
+	}
+	u.Name = &name
+	u.MobileNumber = &mobile
+	if email != "" {
+		u.EmailID = &email
+	}
+
+	if res := h.gdb.Create(u); res.Error != nil {
+		log.Printf("[admin] CreateHelpdeskUser: insert error: %v", res.Error)
+		writeJSON(w, http.StatusInternalServerError, map[string]interface{}{
+			"code": 500, "status": false,
+			"message": "Failed to create user: " + res.Error.Error(),
+		})
+		return
+	}
+
+	log.Printf("[admin] CreateHelpdeskUser: created helpdesk user id=%d uuid=%s mobile=%s", u.ID, u.UUID, mobile)
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"code":    200,
+		"status":  true,
+		"message": "Helpdesk user created successfully. They can login with their mobile number.",
+		"uuid":    u.UUID,
+		"id":      u.ID,
+	})
+}
+
 // ─── parseInt helpers ─────────────────────────────────────────────────────────
 
 func parseInt(s string) int {
