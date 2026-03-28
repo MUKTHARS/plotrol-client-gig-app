@@ -445,8 +445,8 @@ class PropertyWidget extends StatelessWidget {
                                             ?.fields
                                             ?.where((a) =>
                                                 a.key == 'contactNo')
-                                            .first
-                                            .value ??
+                                            .firstOrNull
+                                            ?.value ??
                                         '',
                                   ));
                             },
@@ -489,7 +489,7 @@ class PropertyWidget extends StatelessWidget {
                                         children: [
                                           ReusableTextWidget(
                                             text:
-                                                '${controller.getPropertiesDetails[index].additionalFields?.fields?.where((a) => a.key == 'notes').first.value}',
+                                                '${controller.getPropertiesDetails[index].additionalFields?.fields?.where((a) => a.key == 'notes').firstOrNull?.value ?? ''}',
                                             fontWeight: FontWeight.w700,
                                             fontSize: 14,
                                             maxLines: 1,
