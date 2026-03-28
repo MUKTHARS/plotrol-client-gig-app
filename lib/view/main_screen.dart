@@ -28,19 +28,20 @@ class HomeView extends StatelessWidget {
       });
     }, builder: (controller) {
       return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text(
-            'Plot Patrol - Beta',
-            style:
-                TextStyle(fontWeight: FontWeight.w700, fontFamily: 'Raleway'),
+       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'Plot Patrol - Beta',
+          style: TextStyle(
+            fontWeight: FontWeight.w700, 
+            fontFamily: 'Raleway',
+            color: Color(0xFF1C1510), // _espresso color
           ),
-          backgroundColor: Colors.white,
-          elevation:
-              0, // Optional: Set elevation to 0 if you want the app bar flat
-          foregroundColor:
-              Colors.black, // Optional: Set the text color to black
         ),
+        backgroundColor: const Color(0xFFF7F3EE), // _cream color
+        elevation: 0,
+        foregroundColor: const Color(0xFF1C1510),
+      ),
         body: widgetOptionsPlotRol[controller.selectedIndex.value],
         bottomNavigationBar: BottomNavigationBar(
           showUnselectedLabels: true,

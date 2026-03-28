@@ -115,12 +115,12 @@ class HomeScreen extends StatelessWidget {
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         _EyebrowLabel(text: 'WHAT DO YOU NEED?'),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         SizedBox(height: 108, child: CategoriesTypeWidget()),
 
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 28),
                         _DashedRule(),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
 
                         _BlockHeader(
                           title: 'Ongoing\nTasks',
@@ -128,12 +128,12 @@ class HomeScreen extends StatelessWidget {
                           onAction: () => Get.to(() => ViewAllOrdersScreen()),
                           show: controller.createdOrders.isNotEmpty,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         OnGoingTask(status: 'created', maxItems: 5),
 
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 28),
                         _DashedRule(),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
 
                         _BlockHeader(
                           title: 'Your\nProperties',
@@ -141,7 +141,7 @@ class HomeScreen extends StatelessWidget {
                           onAction: () => Get.to(() => AllProperties()),
                           show: controller.getPropertiesDetails.isNotEmpty,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         PropertyWidget(),
                       ]),
                     ),
@@ -166,7 +166,7 @@ class _HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: _cream,
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -177,57 +177,66 @@ class _HomeHeader extends StatelessWidget {
               GestureDetector(
                 onTap: () {},
                 child: Container(
-                  width: 44,
-                  height: 44,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: _parchment,
                     shape: BoxShape.circle,
-                    border: Border.all(color: _dividerLine, width: 1.5),
+                    border: Border.all(color: _dividerLine, width: 1),
                   ),
-                  child: const Icon(Icons.notifications_outlined, size: 20, color: _walnut),
+                  child: const Icon(Icons.notifications_outlined, size: 18, color: _walnut),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Text(
-            'Hello,',
-            style: const TextStyle(
-              fontSize: 15,
-              color: _steel,
-              letterSpacing: 0.5,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            controller.tenantFirstName.value,
-            style: const TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.w900,
-              color: _espresso,
-              letterSpacing: -1.5,
-              height: 1.0,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: _sienna,
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: const Text(
-              'Ready to book a service?',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.3,
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hello,',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: _steel,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      controller.tenantFirstName.value,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: _espresso,
+                        letterSpacing: -0.5,
+                        height: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _sienna,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Ready to book?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 16),
           Container(height: 1, color: _dividerLine),
         ],
       ),
@@ -244,8 +253,8 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 52,
-      height: 52,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: _sand,
@@ -256,14 +265,14 @@ class _Avatar extends StatelessWidget {
             ? !controller.isTenantDetailLoading.value
                 ? Image.network(
                     controller.tenantProfileImage.value,
-                    width: 52,
-                    height: 52,
+                    width: 48,
+                    height: 48,
                     fit: BoxFit.cover,
                     errorBuilder: (c, e, s) => _initials(controller, authController),
                     loadingBuilder: (c, child, progress) =>
-                        progress == null ? child : _shimmerCircle(52),
+                        progress == null ? child : _shimmerCircle(48),
                   )
-                : _shimmerCircle(52)
+                : _shimmerCircle(48)
             : _initials(controller, authController),
       ),
     );
@@ -273,7 +282,7 @@ class _Avatar extends StatelessWidget {
 Widget _initials(HomeScreenController c, AuthenticationController a) => Center(
       child: Text(
         a.getInitials(c.name.value ?? '', c.lastName.value) ?? '',
-        style: const TextStyle(color: _sienna, fontSize: 18, fontWeight: FontWeight.w800),
+        style: const TextStyle(color: _sienna, fontSize: 16, fontWeight: FontWeight.w800),
       ),
     );
 
@@ -294,7 +303,7 @@ class _EyebrowLabel extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: _sienna,
-          letterSpacing: 2.5,
+          letterSpacing: 2,
         ),
       );
 }
@@ -314,11 +323,11 @@ class _BlockHeader extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
                 color: _espresso,
-                letterSpacing: -1,
-                height: 1.05,
+                letterSpacing: -0.8,
+                height: 1.1,
               ),
             ),
           ),
@@ -327,7 +336,7 @@ class _BlockHeader extends StatelessWidget {
               onTap: onAction,
               child: const Text(
                 'View all →',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _sienna),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _sienna),
               ),
             ),
         ],
@@ -338,11 +347,11 @@ class _DashedRule extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: List.generate(
-          40,
+          30,
           (i) => Expanded(
             child: Container(
-              height: 1.5,
-              margin: const EdgeInsets.symmetric(horizontal: 1.5),
+              height: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 1),
               color: i % 2 == 0 ? _sand : Colors.transparent,
             ),
           ),
@@ -541,8 +550,8 @@ class CategoriesTypeWidget extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(width: 62, height: 62, decoration: const BoxDecoration(color: _sand, shape: BoxShape.circle)),
-                    const SizedBox(height: 8),
-                    Container(width: 50, height: 10, color: _sand),
+                    const SizedBox(height: 6),
+                    Container(width: 50, height: 8, color: _sand),
                   ],
                 ),
               ),
@@ -581,11 +590,11 @@ class CategoriesTypeWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 6),
                   Text(
                     cat.categoryname ?? '',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _walnut, height: 1.2),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _walnut, height: 1.2),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
