@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:plotrol/controller/autentication_controller.dart';
 import 'package:plotrol/helper/const_assets_const.dart';
 import 'package:plotrol/helper/const_ui_strings.dart';
+import 'package:plotrol/view/forgot_password_screen.dart';
 import 'package:plotrol/view/privacy_and_policy_page.dart';
 import 'package:rounded_loading_button_plus/rounded_loading_button.dart';
 import 'package:sizer/sizer.dart';
@@ -197,8 +198,23 @@ class LoginScreen extends StatelessWidget {
                               // ),
                             )
                         ),
-                        SizedBox(
-                          height: 1.h,
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () => Get.to(() => ForgotPasswordScreen()),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  fontFamily: 'Raleway',
+                                  fontSize: 13,
+                                  color: Colors.black,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,

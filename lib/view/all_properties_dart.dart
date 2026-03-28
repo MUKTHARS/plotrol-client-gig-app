@@ -89,7 +89,7 @@ class AllProperties extends StatelessWidget {
                             contactNumber: controller
                                 .getPropertiesDetails[
                             index]
-                                .additionalFields?.fields?.where((a) => a.key == 'contactNo').first.value ??
+                                .additionalFields?.fields?.where((a) => a.key == 'contactNo').firstOrNull?.value ??
                                 '',
                               ));
                         },
@@ -103,10 +103,9 @@ class AllProperties extends StatelessWidget {
                               ) // Adjust radius
                               ),
                           child: SizedBox(
-                            height: 130,
+                            height: 155,
                             width: Get.width,
                             child: Row(
-                              //mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 ClipRRect(
@@ -114,26 +113,47 @@ class AllProperties extends StatelessWidget {
                                     topLeft: Radius.circular(10.0),
                                     bottomLeft: Radius.circular(10.0),
                                   ),
-                                  child:
-                                  // (controller.getPropertiesDetails[index]
-                                  //             .tenantimage?.firstOrNull !=
-                                  //         null)
-                                  //     ? Image.network(
-                                  //         height: 130, width: Get.width / 3,
-                                  //         errorBuilder: (BuildContext context,
-                                  //             Object exception,
-                                  //             StackTrace? stackTrace) {
-                                  //         return Image.asset(
-                                  //             'assets/images/no_image.jpg'); // Custom placeholder image
-                                  //       },
-                                  //         fit: BoxFit.fill,
-                                  //         '${controller.getPropertiesDetails[index].tenantimage?.first}')
-                                  //     :
-                                  const SizedBox(),
-
-                                ),
-                                const SizedBox(
-                                  height: 10,
+                                  child: Builder(builder: (context) {
+                                    final imageUrls = controller.getPropertiesDetails[index].imageUrls;
+                                    final validUrl = imageUrls?.firstWhere(
+                                      (u) => u.isNotEmpty && (u.startsWith('http://') || u.startsWith('https://')),
+                                      orElse: () => '',
+                                    ) ?? '';
+                                    return validUrl.isNotEmpty
+                                        ? Image.network(
+                                            validUrl,
+                                            height: 155,
+                                            width: 110,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, _) => Container(
+                                              height: 155,
+                                              width: 110,
+                                              color: Colors.grey.shade200,
+                                              child: const Icon(Icons.image_outlined, color: Colors.grey),
+                                            ),
+                                            loadingBuilder: (context, child, progress) {
+                                              if (progress == null) return child;
+                                              return Container(
+                                                height: 155,
+                                                width: 110,
+                                                color: Colors.grey.shade200,
+                                                child: const Center(
+                                                  child: SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          )
+                                        : Container(
+                                            height: 155,
+                                            width: 110,
+                                            color: Colors.grey.shade200,
+                                            child: const Icon(Icons.image_outlined, color: Colors.grey),
+                                          );
+                                  }),
                                 ),
                                 Expanded(
                                   child: Padding(
@@ -144,7 +164,7 @@ class AllProperties extends StatelessWidget {
                                         children: [
                                           ReusableTextWidget(
                                             text:
-                                                '${controller.getPropertiesDetails[index].additionalFields?.fields?.where((a) => a.key == 'notes').first.value }',
+                                                '${controller.getPropertiesDetails[index].additionalFields?.fields?.where((a) => a.key == 'notes').firstOrNull?.value ?? ''}',
                                             fontWeight: FontWeight.w600,
                                             fontSize: 16,
                                           ),
@@ -186,7 +206,7 @@ class AllProperties extends StatelessWidget {
                                                 child: ReusableTextWidget(
                                                   maxLines: 2,
                                                   text:
-                                                      '${controller.getPropertiesDetails[index].additionalFields?.fields?.where((a) => a.key == 'contactNo').first.value}',
+                                                      '${controller.getPropertiesDetails[index].additionalFields?.fields?.where((a) => a.key == 'contactNo').firstOrNull?.value ?? ''}',
                                                 ),
                                               ),
                                             ],
@@ -233,7 +253,7 @@ class AllProperties extends StatelessWidget {
                                                               contactNumber: controller
                                                                       .getPropertiesDetails[
                                                                           index]
-                                                                      .additionalFields?.fields?.where((a) => a.key == 'contactNo').first.value ??
+                                                                      .additionalFields?.fields?.where((a) => a.key == 'contactNo').firstOrNull?.value ??
                                                                   '',
                                                               selectedCategory:
                                                                   selectedCategory ??

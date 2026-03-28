@@ -196,7 +196,8 @@ class HomeScreenController extends GetxController {
       });
     HouseholdsResponse? result = await _getPropertiesRepository.getProperties((householdMembers?.householdMembers ?? []).isNotEmpty ? householdMembers!.householdMembers!.map((h) => h.householdClientReferenceId! ).toList() : []);
     if ((result?.households ?? []).isNotEmpty) {
-      getPropertiesDetails = await enrichHouseholdsWithImageUrls(result?.households ?? [], ApiConstants.tenantId);
+      getPropertiesDetails = await enrichHouseholdsWithImageUrls(result?.households ?? [], ApiConstants.tenantId)
+        ..sort((a, b) => (b.auditDetails?.createdTime ?? 0).compareTo(a.auditDetails?.createdTime ?? 0));
       isPropertyLoading.value = false;
       update();
      }

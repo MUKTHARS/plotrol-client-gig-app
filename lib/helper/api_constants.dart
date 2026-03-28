@@ -15,8 +15,11 @@ class ApiConstants {
   static String login = '${host}/user/oauth/token';
 
   static String sendOtp = '/user-otp/v1/_send';
+  static String forgotPassword = '${host}/user/password/forgot';
+  static String resetPassword = '${host}/user/password/reset';
   static String createRequester = '/egov-hrms/employees/_create';
   static String createCitizen = '/user/citizen/_create';
+  static String createHelpdeskUser = '${host}/user/citizen/_create';
 
   static String individualSearch = '/individual/v1/_search';
   static String memberSearch = '/household/member/v1/_search';

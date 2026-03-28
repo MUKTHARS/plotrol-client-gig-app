@@ -10,6 +10,7 @@ class ReusableTextWidget extends StatelessWidget {
   final TextAlign? textAlign;
   final int? maxLines;
   final TextDecoration? isUnderText;
+  final TextOverflow? overflow;
 
   const ReusableTextWidget({
     super.key,
@@ -22,6 +23,7 @@ class ReusableTextWidget extends StatelessWidget {
     this.textAlign,
     this.maxLines,
     this.isUnderText,
+    this.overflow,
   });
 
   @override
@@ -35,7 +37,7 @@ class ReusableTextWidget extends StatelessWidget {
           fontWeight: fontWeight ?? FontWeight.normal,
           fontStyle: fontStyle ?? FontStyle.normal,
           color: color,
-          overflow: TextOverflow.ellipsis),
+          overflow: overflow ?? TextOverflow.ellipsis),
       maxLines: maxLines,
       textAlign: textAlign ?? TextAlign.start,
     );

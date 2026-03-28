@@ -57,7 +57,8 @@ class PropertiesDetailsScreen extends StatelessWidget {
                           },
                         ),
                         items: propertyImage
-                            ?.map((item) => Center(
+                            ?.where((item) => item.isNotEmpty && (item.startsWith('http://') || item.startsWith('https://')))
+                            .map((item) => Center(
                                   child: Image.network(item,
                                       fit: BoxFit.cover,
                                       height: 150.h,
