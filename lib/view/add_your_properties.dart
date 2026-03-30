@@ -14,6 +14,15 @@ import 'package:sizer/sizer.dart';
 import '../globalWidgets/text_field_widget.dart';
 import '../helper/api_constants.dart';
 
+// reuse the home screen design tokens to keep layout consistency
+const _cream = Color(0xFFF7F3EE);
+const _parchment = Color(0xFFEFE9DF);
+const _sand = Color(0xFFE4DAC8);
+const _espresso = Color(0xFF1C1510);
+const _walnut = Color(0xFF3D2B1F);
+const _sienna = Color(0xFFB85C38);
+const _steel = Color(0xFF8C8480);
+
 class AddYourProperties extends StatelessWidget {
   AddYourProperties({super.key});
 
@@ -30,20 +39,33 @@ class AddYourProperties extends StatelessWidget {
       });
     }, builder: (controller) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: _cream,
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: Colors.white,
-          title: const ReusableTextWidget(
-            text: 'Add Your Properties',
-            fontSize: 21,
-            fontWeight: FontWeight.w700,
+          backgroundColor: _cream,
+          elevation: 0,
+          title: const Text(
+            'Add Your Properties',
+            style: TextStyle(
+              color: _espresso,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+              height: 1.0,
+              fontFamily: 'Raleway',
+            ),
           ),
         ),
         body: Padding(
             padding: const EdgeInsets.all(16.0),
             child: SingleChildScrollView(
-                child: Column(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: _parchment,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -158,11 +180,15 @@ class AddYourProperties extends StatelessWidget {
                 const SizedBox(
                   height: 25,
                 ),
-                const ReusableTextWidget(
-                  maxLines: 2,
-                  text: 'Please fill your work location and other details*',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                const Text(
+                  'Please fill your work location and other details*',
+                  style: TextStyle(
+                    fontFamily: 'Raleway',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: _walnut,
+                    height: 1.3,
+                  ),
                 ),
                 const SizedBox(
                   height: 20,
@@ -204,10 +230,16 @@ class AddYourProperties extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.location_on),
-                    const ReusableTextWidget(
-                      text: 'Address',
-                      fontSize: 16,
+                    const Icon(Icons.location_on, color: _sienna),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Address',
+                      style: TextStyle(
+                        fontFamily: 'Raleway',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _espresso,
+                      ),
                     ),
                     const Spacer(),
                     Obx(() {
@@ -299,13 +331,13 @@ class AddYourProperties extends StatelessWidget {
                       )
                     : const SizedBox.shrink(),
               ],
-            ))),
+            )))),
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: RoundedLoadingButton(
               width: MediaQuery.of(context).size.width,
-              color: Colors.black,
+              color: _sienna,
               onPressed: () async {
                 ApiConstants.addProperties = ApiConstants.addPropertiesLive;
                 controller.addYourPropertiesValidation();
@@ -314,10 +346,15 @@ class AddYourProperties extends StatelessWidget {
               },
               borderRadius: 10,
               controller: controller.btnController,
-              child: const ReusableTextWidget(
-                text: 'Create',
-                color: Colors.white,
-                fontSize: 16,
+              child: const Text(
+                'Create',
+                style: TextStyle(
+                  fontFamily: 'Raleway',
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
               ),
             ),
           ),
