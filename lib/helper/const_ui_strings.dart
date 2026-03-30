@@ -22,7 +22,7 @@ class ConstUiStrings {
 
   static const String enterUserNameForYourAccount = 'Enter username for your account';
 
-  static const String enterUserName = 'Enter Username / Mobile Number (For requester)';
+  static const String enterUserName = 'Enter Username / Mobile Number';
   static const String enterPassword = 'Enter Password';
   static const String confirmPassword = 'Confirm Password';
 
