@@ -183,7 +183,12 @@ class ViewAllOrdersController extends GetxController with GetTickerProviderState
     int toMillis,
   ) {
     return orders.where((order) {
-      if (order.service?.applicationStatus == 'ASSIGNED') return true;
+      final status = AppUtils().getOrderStatus(order);
+
+      // Assigned and completed orders are always valuable to show.
+      // For historical audit and completed tracking, do not limit by date.
+      if (status == 'accepted' || status == 'completed') return true;
+
       final lastModifiedTime = order.service?.auditDetails?.lastModifiedTime ?? 0;
       return lastModifiedTime >= fromMillis && lastModifiedTime <= toMillis;
     }).toList();
