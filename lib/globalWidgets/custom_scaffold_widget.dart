@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+// ── Design tokens (matching home screen) ────────────────────────────────────
+const _cream = Color(0xFFF7F3EE);
+const _espresso = Color(0xFF1C1510);
+const _dividerLine = Color(0xFFDDD5C8);
+// ─────────────────────────────────────────────────────────────────────────────
+
 class CustomScaffold extends StatelessWidget {
   final Widget body; // This will be the body of the Scaffold (the main content of each screen)
   final bool automaticallyImplyLeading;
@@ -26,18 +32,22 @@ class CustomScaffold extends StatelessWidget {
         title: customTitle ?? const Text(
           'Plot Patrol - Beta',
           style: TextStyle(
-            fontWeight: FontWeight.w700,
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
             fontFamily: 'Raleway',
+            color: _espresso,
+            letterSpacing: -0.8,
+            height: 1.1,
           ),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0, // Optional: Set elevation to 0 if you want the app bar flat
-        foregroundColor: Colors.black, // Optional: Set the text color to black
-        actions: actions, // Use custom actions if provided
-        bottom: bottom, // Use custom bottom if provided
+        backgroundColor: _cream,
+        elevation: 0,
+        foregroundColor: _espresso,
+        actions: actions,
+        bottom: bottom,
       ),
-      body: body, // This is the content passed to the body of the Scaffold
-      bottomNavigationBar: bottomNavigationBar, // Use bottom navigation bar if provided
+      body: body,
+      bottomNavigationBar: bottomNavigationBar,
     );
   }
 }

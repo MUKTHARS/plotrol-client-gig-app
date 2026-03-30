@@ -12,6 +12,18 @@ import '../globalWidgets/text_widget.dart';
 import '../helper/const_assets_const.dart';
 import 'add_helpdesk_user_screen.dart';
 
+// ── Design tokens (matching home screen) ────────────────────────────────────
+const _cream = Color(0xFFF7F3EE);
+const _parchment = Color(0xFFEFE9DF);
+const _sand = Color(0xFFE4DAC8);
+const _espresso = Color(0xFF1C1510);
+const _walnut = Color(0xFF3D2B1F);
+const _sienna = Color(0xFFB85C38);
+const _siennaLight = Color(0x1AB85C38);
+const _steel = Color(0xFF8C8480);
+const _dividerLine = Color(0xFFDDD5C8);
+// ─────────────────────────────────────────────────────────────────────────────
+
 class Profile extends StatelessWidget {
   Profile({super.key});
 
@@ -28,14 +40,20 @@ class Profile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _cream,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        title: const ReusableTextWidget(
-          text: 'Profile',
-          fontSize: 21,
-          fontWeight: FontWeight.w700,
+        backgroundColor: _cream,
+        elevation: 0,
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            color: _espresso,
+            letterSpacing: -0.8,
+            height: 1.0,
+          ),
         ),
       ),
       body: Sizer(
@@ -47,150 +65,172 @@ class Profile extends StatelessWidget {
             },
             builder: (controller) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                 child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   child: Column(
                     children: [
-                      const SizedBox(height: 10,),
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            minRadius: 50,
-                            maxRadius: 50,
-                            backgroundColor: Colors.grey.withOpacity(0.4),
-                            child: (controller.tenantProfileImage.value.isNotEmpty || createAccountController.profileImage != null) ?
-                            ClipOval(
-                              child: controller.tenantProfileImage.value.isNotEmpty ? Image.network(
-                                fit: BoxFit.cover,
-                                width: 100,
-                                height: 100,
-                                controller.tenantProfileImage.value,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Image.network(
-                                      ImageAssetsConst.sampleRoomPage,
-                                      width: 120,
-                                      height: 140,
-                                      fit: BoxFit.fill,
-                                    );
-                                  }
-                              ) : Image.file(
-                                width: 100,
-                                height : 100,
-                                File(createAccountController.profileImage?.path ?? ''),
-                                fit: BoxFit.cover,
-                              ),
-                            ) :
-                            const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.white,
+                      // Profile Card
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: _dividerLine),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _espresso.withOpacity(0.06),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
                             ),
-                          ),
-                          const SizedBox(width: 10,),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ReusableTextWidget(
-                                    text: controller.tenantFirstName.value.isNotEmpty ?
-                                    '${controller.tenantFirstName.value}${controller.tenantLastName.value}' :
-                                    '${createAccountController.firstName.value}${createAccountController.lastName.value}',
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
-                                    maxLines: 2,
-                                  ),
-                                  ReusableTextWidget(
-                                    text: controller.tenantEmail.value.isNotEmpty ? controller.tenantEmail.value :
-                                    createAccountController.emailController.text,
-                                    fontSize: 16,
-                                    maxLines: 2,
-                                  ),
-                                ],
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              // Avatar
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _sand,
+                                  border: Border.all(color: _sienna, width: 2),
+                                ),
+                                child: ClipOval(
+                                  child: (controller.tenantProfileImage.value.isNotEmpty || 
+                                          createAccountController.profileImage != null)
+                                      ? (controller.tenantProfileImage.value.isNotEmpty
+                                          ? Image.network(
+                                              controller.tenantProfileImage.value,
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return _buildInitialsAvatar(controller);
+                                              },
+                                            )
+                                          : Image.file(
+                                              File(createAccountController.profileImage?.path ?? ''),
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.cover,
+                                            ))
+                                      : _buildInitialsAvatar(controller),
+                                ),
                               ),
+                              const SizedBox(width: 16),
+                              // User Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      controller.tenantFirstName.value.isNotEmpty
+                                          ? '${controller.tenantFirstName.value} ${controller.tenantLastName.value}'
+                                          : '${createAccountController.firstName.value} ${createAccountController.lastName.value}',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w800,
+                                        color: _espresso,
+                                        letterSpacing: -0.3,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      controller.tenantEmail.value.isNotEmpty 
+                                          ? controller.tenantEmail.value
+                                          : createAccountController.emailController.text,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: _steel,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 20,),
-                      ListTile(
-                        leading: const Icon(Icons.person, color: Colors.black),
-                        title: const ReusableTextWidget(
-                          text: 'Profile Information',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
                         ),
-                        onTap: () {
-                          Get.to(() => ProfileInformationScreen());
-                        },
                       ),
-                      ListTile(
-                        leading: const Icon(Icons.feedback, color: Colors.black),
-                        title: const ReusableTextWidget(
-                          text: "FAQ's",
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Menu Items Container
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: _dividerLine),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _espresso.withOpacity(0.06),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                         ),
-                        onTap: () {
-                          Get.to(() =>
-                             const WebViewApp(
-                             url: 'https://www.plotrol.com/faq',
-                             appBarText: "FAQ's",
-                           )
-                          );
-                        },
+                        child: Column(
+                          children: [
+                            _buildMenuItem(
+                              icon: Icons.person_outline,
+                              title: 'Profile Information',
+                              onTap: () {
+                                Get.to(() => ProfileInformationScreen());
+                              },
+                            ),
+                            const Divider(height: 1, color: _dividerLine),
+                            _buildMenuItem(
+                              icon: Icons.help_outline,
+                              title: "FAQ's",
+                              onTap: () {
+                                Get.to(() => const WebViewApp(
+                                  url: 'https://www.plotrol.com/faq',
+                                  appBarText: "FAQ's",
+                                ));
+                              },
+                            ),
+                            // Add Users (admin only)
+                            if (controller.isPGRAdmin.value) ...[
+                              const Divider(height: 1, color: _dividerLine),
+                              _buildMenuItem(
+                                icon: Icons.person_add_alt_1_outlined,
+                                title: 'Add Users',
+                                onTap: () {
+                                  Get.to(() => AddHelpdeskUserScreen());
+                                },
+                              ),
+                            ],
+                            const Divider(height: 1, color: _dividerLine),
+                            _buildMenuItem(
+                              icon: Icons.logout_outlined,
+                              title: 'Logout',
+                              onTap: () {
+                                profileScreenController.logout();
+                              },
+                              isDestructive: true,
+                            ),
+                          ],
+                        ),
                       ),
-
-                      // Payment History
-                      // ListTile(
-                      //   leading: Icon(Icons.payment, color: Colors.black),
-                      //   title: const ReusableTextWidget(
-                      //     text: 'PaymentHistory',
-                      //     fontSize: 16,
-                      //     fontWeight: FontWeight.w600,
-                      //   ),
-                      //   onTap: () {
-                      //     // Handle payment history action
-                      //   },
-                      // ),
-
-                      // Settings
-                      // ListTile(
-                      //   leading: Icon(Icons.settings, color: Colors.black),
-                      //   title:  ReusableTextWidget(
-                      //     text: 'Settings',
-                      //     fontSize: 16,
-                      //     fontWeight: FontWeight.w600,
-                      //   ),
-                      //   onTap: () {
-                      //     // Handle settings action
-                      //   },
-                      // ),
-
-                      // Add Users (admin only)
-                      if (controller.isPGRAdmin.value)
-                        ListTile(
-                          leading: const Icon(Icons.person_add, color: Colors.black),
-                          title: const ReusableTextWidget(
-                            text: 'Add Users',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Version Info
+                      Center(
+                        child: Text(
+                          'Version 1.0.0',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _steel.withOpacity(0.7),
                           ),
-                          onTap: () {
-                            Get.to(() => AddHelpdeskUserScreen());
-                          },
                         ),
-
-                      // Logout
-                      ListTile(
-                        leading: Icon(Icons.logout, color: Colors.black),
-                          title:  ReusableTextWidget(
-                            text: 'Logout',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          onTap: () {
-                            profileScreenController.logout();
-                            },
-                       ),
+                      ),
                     ],
                   ),
                 ),
@@ -198,7 +238,74 @@ class Profile extends StatelessWidget {
             }
           );
         },
-      )
+      ),
+    );
+  }
+
+  Widget _buildInitialsAvatar(HomeScreenController controller) {
+    final initials = authenticationController.getInitials(
+      controller.name.value ?? '', 
+      controller.lastName.value
+    ) ?? 'U';
+    
+    return Center(
+      child: Text(
+        initials,
+        style: const TextStyle(
+          color: _sienna,
+          fontSize: 28,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: _siennaLight,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isDestructive ? Colors.red : _sienna,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDestructive ? Colors.red : _walnut,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: _steel,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

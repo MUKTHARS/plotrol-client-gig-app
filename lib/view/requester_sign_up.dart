@@ -15,38 +15,51 @@ import 'package:sizer/sizer.dart';
 import '../controller/requester_login_controller.dart';
 import '../globalWidgets/text_widget.dart';
 
+// ── Design tokens (matching home screen) ────────────────────────────────────
+const _cream = Color(0xFFF7F3EE);
+const _parchment = Color(0xFFEFE9DF);
+const _sand = Color(0xFFE4DAC8);
+const _espresso = Color(0xFF1C1510);
+const _walnut = Color(0xFF3D2B1F);
+const _sienna = Color(0xFFB85C38);
+const _siennaLight = Color(0x1AB85C38);
+const _steel = Color(0xFF8C8480);
+const _dividerLine = Color(0xFFDDD5C8);
+// ─────────────────────────────────────────────────────────────────────────────
+
 class RequesterSignup extends StatelessWidget {
   RequesterSignup({super.key,});
 
   final RequesterLoginController authenticationController = Get.put(RequesterLoginController());
   final passwordRegex = RegExp(r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%])(?=\S+$).{8,15}$');
 
-
   @override
   Widget build(BuildContext context) {
     final defaultPinTheme = PinTheme(
       width: 56,
       height: 56,
-      textStyle: const TextStyle(fontSize: 22, color: Colors.black),
+      textStyle: const TextStyle(fontSize: 22, color: _espresso),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10.0),
-        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: _dividerLine),
       ),
     );
 
     final focusedPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration?.copyWith(
-        color: Colors.grey.shade100,
+        color: _parchment,
+        border: Border.all(color: _sienna, width: 1.5),
       ),
     );
 
     final submittedPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration?.copyWith(
-        color: Colors.grey.shade300,
+        color: _sand,
       ),
     );
+    
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _cream,
       body: SafeArea(
         child: GetBuilder<RequesterLoginController>(
           builder: (controller) {
@@ -54,342 +67,188 @@ class RequesterSignup extends StatelessWidget {
               builder: (context, orientation, screenType) {
                 return Center(
                   child: Padding(
-                    padding:  EdgeInsets.only(
-                      left: 2.h,
-                      right: 2.h,
-                      bottom: 2.h,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 6.w),
                     child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          SizedBox(
-                            height: 10.h,
+                          SizedBox(height: 6.h),
+                          // Logo with background circle
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: _siennaLight,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Image.asset(
+                              ImageAssetsConst.plotRolLogo,
+                              height: 80,
+                              width: 80,
+                            ),
                           ),
-                          const ReusableTextWidget(
-                            text: ConstUiStrings.plotRol,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 26,
+                          SizedBox(height: 2.h),
+                          // App Name
+                          const Text(
+                            ConstUiStrings.plotRol,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: _espresso,
+                              letterSpacing: -0.8,
+                              height: 1.0,
+                            ),
                           ),
-                          SizedBox(
-                            height: 2.h,
+                          SizedBox(height: 1.h),
+                          // Tagline
+                         
+                          SizedBox(height: 4.h),
+                          // Divider
+                          Row(
+                            children: [
+                              Expanded(child: Container(height: 1, color: _dividerLine)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: const Text(
+                                  'SIGN UP DETAILS',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: _steel,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ),
+                              Expanded(child: Container(height: 1, color: _dividerLine)),
+                            ],
                           ),
-                          Image.asset(
-                            ImageAssetsConst.plotRolLogo,
-                            height: 120,
-                            width: 120,
-                          ),
-                          SizedBox(
-                            height: 4.h,
-                          ),
-                          const ReusableTextWidget(
-                            text: ConstUiStrings.signInToContinue,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          SizedBox(
-                            height: 3.h,
-                          ),
-                          TextFormField(
-                              controller: controller.mobileController,
-                              onTap: () {
-                                controller.isScrollView.value = true;
-                              },
-                              onTapOutside: (event) {
-                                FocusScope.of(context).unfocus();
-                              },
-                              onEditingComplete: () {
-                                FocusScope.of(context).unfocus();
-                              },
-                              keyboardType: TextInputType.text,
-                              onChanged: (text) {
-                                if (text.length == 10) {
-                                  FocusScope.of(context).unfocus();
-                                }
-                              },
-                              inputFormatters: [
-                                LengthLimitingTextInputFormatter(10),
-                                FilteringTextInputFormatter.digitsOnly,
+                          SizedBox(height: 3.h),
+                          // Mobile Number Field
+                          _buildTextField(
+                            controller: controller.mobileController,
+                            hintText: ConstUiStrings.enterPhoneNumber,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(10),
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            prefixWidget: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const SizedBox(width: 12),
+                                CountryPickerUtils.getDefaultFlagImage(
+                                  controller.selectedDialogCountry,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  "+${controller.selectedDialogCountry.phoneCode}",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: _espresso,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(width: 1, height: 24, color: _dividerLine),
+                                const SizedBox(width: 8),
                               ],
-                              decoration: InputDecoration(
-                                hintText: ConstUiStrings.enterPhoneNumber,
-                                hintStyle: const TextStyle(
-                                  fontFamily: 'Raleway',
-                                  fontSize: 15,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: const BorderSide(
-                                    color: Colors.grey,
-                                    width: 0,
-                                  ),
-                                ),
-                                focusedBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.black,
-                                    // Set the color you want when the field is focused
-                                    width: 1.0, // Set the width of the border side
-                                  ),
-                                ),
-                                prefixIcon: SizedBox(
-                                  width: Get.width * 0.3,
-                                  height: Get.height * 0.04,
-                                  child: Row(
-                                    children: [
-                                      const SizedBox(
-                                        width: 25,
-                                      ),
-                                      InkWell(
-                                        child: CountryPickerUtils
-                                            .getDefaultFlagImage(
-                                            controller.selectedDialogCountry),
-                                        // onTap: _openCountryPickerDialog,
-                                      ),
-                                      const SizedBox(
-                                        width: 8,
-                                      ),
-                                      Text(
-                                          "+${controller.selectedDialogCountry
-                                              .phoneCode}"),
-                                    ],
-                                  ),
-                                ),
-                              )
-                          ),
-                          SizedBox(
-                            height: 1.h,
-                          ),
-                          Offstage(
-                            offstage: false,
-                          // offstage: authenticationController.showNameField.value == false,
-                            child: TextFormField(
-                                controller: controller.nameController,
-                                onTap: () {
-                                  controller.isScrollView.value = true;
-                                },
-                                onTapOutside: (event) {
-                                  FocusScope.of(context).unfocus();
-                                },
-                                onEditingComplete: () {
-                                  FocusScope.of(context).unfocus();
-                                },
-                                keyboardType: TextInputType.text,
-                                onChanged: (text) {
-                                  // if (text.length == 10) {
-                                  //   FocusScope.of(context).unfocus();
-                                  // }
-                                },
-                                // inputFormatters: [
-                                //   LengthLimitingTextInputFormatter(10),
-                                //   FilteringTextInputFormatter.digitsOnly,
-                                // ],
-                                decoration: InputDecoration(
-                                  hintText: ConstUiStrings.enterName,
-                                  hintStyle: const TextStyle(
-                                    fontFamily: 'Raleway',
-                                    fontSize: 15,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                    borderSide: const BorderSide(
-                                      color: Colors.grey,
-                                      width: 0,
-                                    ),
-                                  ),
-                                  focusedBorder: const OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Colors.black,
-                                      // Set the color you want when the field is focused
-                                      width: 1.0, // Set the width of the border side
-                                    ),
-                                  ),
-                                ),
                             ),
                           ),
-                          SizedBox(
-                            height: 1.h,
+                          SizedBox(height: 2.h),
+                          // Name Field
+                          _buildTextField(
+                            controller: controller.nameController,
+                            hintText: ConstUiStrings.enterName,
+                            keyboardType: TextInputType.text,
                           ),
-                          Offstage(
-                            offstage: false,
-                            // offstage: authenticationController.showNameField.value == false,
-                            child: TextFormField(
-                              controller: controller.passwordController,
-                              onTap: () {
-                                controller.isScrollView.value = true;
-                              },
-                              onTapOutside: (event) {
-                                FocusScope.of(context).unfocus();
-                              },
-                              onEditingComplete: () {
-                                FocusScope.of(context).unfocus();
-                              },
-                              keyboardType: TextInputType.text,
-                              obscureText: !controller.isPasswordVisible.value,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Password is required';
-                                }
-                                if (!passwordRegex.hasMatch(value)) {
-                                  return 'Password must be 8-15 chars, include upper, lower, digit, and @#\$%';
-                                }
-                                return null; // valid
-                              },
-                              onChanged: (text) {
-                                controller.password.value = text;
-                                // if (text.length == 10) {
-                                //   FocusScope.of(context).unfocus();
-                                // }
-                              },
-                              decoration: InputDecoration(
-                                hintText: ConstUiStrings.enterPassword,
-                                hintStyle: const TextStyle(
-                                  fontFamily: 'Raleway',
-                                  fontSize: 15,
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    controller.isPasswordVisible.value ? Icons.visibility : Icons.visibility_off ,
-                                    color: Colors.grey,
-                                  ),
-                                  onPressed: () {
-                                    controller.togglePasswordVisibility();
-                                  },
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: const BorderSide(
-                                    color: Colors.grey,
-                                    width: 0,
-                                  ),
-                                ),
-                                focusedBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.black,
-                                    // Set the color you want when the field is focused
-                                    width: 1.0, // Set the width of the border side
-                                  ),
-                                ),
+                          SizedBox(height: 2.h),
+                          // Password Field
+                          _buildTextField(
+                            controller: controller.passwordController,
+                            hintText: ConstUiStrings.enterPassword,
+                            obscureText: !controller.isPasswordVisible.value,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                controller.isPasswordVisible.value ? Icons.visibility : Icons.visibility_off,
+                                color: _steel,
+                                size: 20,
                               ),
+                              onPressed: () {
+                                controller.togglePasswordVisibility();
+                              },
                             ),
                           ),
-                          SizedBox(
-                            height: 1.h,
-                          ),
-                          Offstage(
-                            offstage: false,
-                            // offstage: authenticationController.showNameField.value == false,
-                            child: TextFormField(
-                              controller: controller.confirmPasswordController,
-                              onTap: () {
-                                controller.isScrollView.value = true;
-                              },
-                              onTapOutside: (event) {
-                                FocusScope.of(context).unfocus();
-                              },
-                              onEditingComplete: () {
-                                FocusScope.of(context).unfocus();
-                              },
-                              keyboardType: TextInputType.text,
-                              obscureText: !controller.isConfirmPasswordVisible.value,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Confirm Password is required';
-                                }
-                                if (!passwordRegex.hasMatch(value)) {
-                                  return 'Password must be 8-15 chars, include upper, lower, digit, and @#\$%';
-                                }
-                                if (value.toString() != controller.passwordController.value.text) {
-                                  return 'Passwords do not match';
-                                }
-                                return null; // valid
-                              },
-                              onChanged: (text) {
-                                // if (text.length == 10) {
-                                //   FocusScope.of(context).unfocus();
-                                // }
-                              },
-                              decoration: InputDecoration(
-                                hintText: ConstUiStrings.confirmPassword,
-                                hintStyle: const TextStyle(
-                                  fontFamily: 'Raleway',
-                                  fontSize: 15,
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    controller.isConfirmPasswordVisible.value ? Icons.visibility : Icons.visibility_off ,
-                                    color: Colors.grey,
-                                  ),
-                                  onPressed: () {
-                                    controller.toggleConfirmPasswordVisibility();
-                                  },
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  borderSide: const BorderSide(
-                                    color: Colors.grey,
-                                    width: 0,
-                                  ),
-                                ),
-                                focusedBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.black,
-                                    // Set the color you want when the field is focused
-                                    width: 1.0, // Set the width of the border side
-                                  ),
-                                ),
+                          SizedBox(height: 2.h),
+                          // Confirm Password Field
+                          _buildTextField(
+                            controller: controller.confirmPasswordController,
+                            hintText: ConstUiStrings.confirmPassword,
+                            obscureText: !controller.isConfirmPasswordVisible.value,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                controller.isConfirmPasswordVisible.value ? Icons.visibility : Icons.visibility_off,
+                                color: _steel,
+                                size: 20,
                               ),
+                              onPressed: () {
+                                controller.toggleConfirmPasswordVisibility();
+                              },
                             ),
                           ),
-                          SizedBox(
-                            height: 1.h,
-                          ),
+                          SizedBox(height: 2.h),
+                          // Password Validator Card
                           Obx(() {
                             final pwd = controller.password.value;
-                            return Card(
-                              color: Colors.black,
-                              elevation: 0,
-                              margin: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: _parchment,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: _dividerLine),
+                              ),
                               child: Padding(
-                                padding: const EdgeInsets.all(12.0),
+                                padding: const EdgeInsets.all(16),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
-                                        Icon(Icons.info, color: Colors.white,),
-                                        SizedBox(
-                                          width: 1.h,
+                                        Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: _siennaLight,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.info_outline,
+                                            size: 16,
+                                            color: _sienna,
+                                          ),
                                         ),
-                                        const ReusableTextWidget(
-                                          text: ConstUiStrings.passwordInfo,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                        const SizedBox(width: 10),
+                                        const Text(
+                                          'Password Requirements',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                            color: _espresso,
+                                            letterSpacing: -0.3,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                    SizedBox(
-                                      height: 1.h,
-                                    ),
-                                    const ReusableTextWidget(
-                                      text: ConstUiStrings.passwordDescription,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                    buildPasswordRuleItem("◇ At least one digit", controller.hasDigit(pwd)),
-                                    buildPasswordRuleItem("◇ At least one lowercase letter", controller.hasLowercase(pwd)),
-                                    buildPasswordRuleItem("◇ At least one uppercase letter", controller.hasUppercase(pwd)),
-                                    buildPasswordRuleItem("◇ At least one special character (@, #, \$, %)", controller.hasSpecialChar(pwd)),
-                                    buildPasswordRuleItem("◇ No white spaces", controller.hasNoWhitespace(pwd)),
-                                    buildPasswordRuleItem("◇ Length between 8-15 characters", controller.hasValidLength(pwd)),
+                                    const SizedBox(height: 12),
+                                    _buildPasswordRuleItem("At least one digit", controller.hasDigit(pwd)),
+                                    _buildPasswordRuleItem("At least one lowercase letter", controller.hasLowercase(pwd)),
+                                    _buildPasswordRuleItem("At least one uppercase letter", controller.hasUppercase(pwd)),
+                                    _buildPasswordRuleItem("At least one special character (@, #, \$, %)", controller.hasSpecialChar(pwd)),
+                                    _buildPasswordRuleItem("No white spaces", controller.hasNoWhitespace(pwd)),
+                                    _buildPasswordRuleItem("Length between 8-15 characters", controller.hasValidLength(pwd)),
                                   ],
                                 ),
                               ),
                             );
-                          })
-
+                          }),
+                          SizedBox(height: 4.h),
                         ],
                       ),
                     ),
@@ -401,50 +260,126 @@ class RequesterSignup extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: SafeArea(
-        child: Row(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 2.h,
-                right: 2.h,
-                bottom: 2.h,
-              ),
-              child: RoundedLoadingButton(
-                width: Get.width,
-                color: Colors.black,
-                controller: authenticationController.btnController,
-                onPressed: () {
-                  authenticationController.loginScreenValidation(
-                      authenticationController.mobileController.text,
-                      context
-                  );
-                },
-                borderRadius: 10,
-                child: const ReusableTextWidget(
-                  text: ConstUiStrings.continueText,
-                  color: Colors.white,
-                  fontSize: 15,
-                ),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(6.w, 0, 6.w, 3.h),
+          child: RoundedLoadingButton(
+            width: Get.width,
+            color: _espresso,
+            controller: authenticationController.btnController,
+            onPressed: () {
+              authenticationController.loginScreenValidation(
+                authenticationController.mobileController.text,
+                context
+              );
+            },
+            borderRadius: 14,
+            child: const Text(
+              ConstUiStrings.continueText,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
               ),
             ),
           ),
-        ],
         ),
       ),
     );
   }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+    List<TextInputFormatter>? inputFormatters,
+    Widget? prefixWidget,
+    Widget? suffixIcon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _dividerLine),
+      ),
+      child: TextFormField(
+        controller: controller,
+        onTap: () {
+          // Handle scroll if needed
+        },
+        onTapOutside: (event) {
+          FocusScope.of(Get.context!).unfocus();
+        },
+        onEditingComplete: () {
+          FocusScope.of(Get.context!).unfocus();
+        },
+        keyboardType: keyboardType,
+        obscureText: obscureText,
+        inputFormatters: inputFormatters,
+        style: const TextStyle(
+          fontSize: 15,
+          color: _espresso,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: const TextStyle(
+            fontSize: 14,
+            color: _steel,
+            fontWeight: FontWeight.w400,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: _sienna, width: 1.5),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          prefixIcon: prefixWidget != null
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: prefixWidget,
+                )
+              : null,
+          suffixIcon: suffixIcon,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordRuleItem(String text, bool isValid) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(
+            isValid ? Icons.check_circle : Icons.circle_outlined,
+            size: 14,
+            color: isValid ? _sienna : _steel,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 11,
+                color: isValid ? _walnut : _steel,
+                fontWeight: isValid ? FontWeight.w600 : FontWeight.w400,
+                decoration: isValid ? TextDecoration.lineThrough : null,
+                decorationColor: _steel,
+                decorationThickness: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
-
-
-// class WebView extends StatelessWidget {
-//
-//    WebViewController controller = WebViewController();
-//
-//    WebView({super.key, required this.controller});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return ;
-//   }
-// }

@@ -7,6 +7,12 @@ import 'package:plotrol/view/profile.dart';
 
 import 'add_your_properties.dart';
 
+// ── Design tokens (matching home screen) ────────────────────────────────────
+const _cream = Color(0xFFF7F3EE);
+const _espresso = Color(0xFF1C1510);
+const _sienna = Color(0xFFB85C38);
+// ─────────────────────────────────────────────────────────────────────────────
+
 class HomeView extends StatelessWidget {
   final int selectedIndex;
 
@@ -28,65 +34,76 @@ class HomeView extends StatelessWidget {
       });
     }, builder: (controller) {
       return Scaffold(
-       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Plot Patrol - Beta',
-          style: TextStyle(
-            fontWeight: FontWeight.w700, 
-            fontFamily: 'Raleway',
-            color: Color(0xFF1C1510), // _espresso color
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'Plot Patrol - Beta',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Raleway',
+              color: _espresso,
+              letterSpacing: -0.8,
+              height: 1.1,
+            ),
           ),
+          backgroundColor: _cream,
+          elevation: 0,
+          foregroundColor: _espresso,
         ),
-        backgroundColor: const Color(0xFFF7F3EE), // _cream color
-        elevation: 0,
-        foregroundColor: const Color(0xFF1C1510),
-      ),
         body: widgetOptionsPlotRol[controller.selectedIndex.value],
         bottomNavigationBar: BottomNavigationBar(
           showUnselectedLabels: true,
           selectedLabelStyle: const TextStyle(
             fontFamily: 'Raleway',
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.3,
           ),
           unselectedLabelStyle: const TextStyle(
             fontFamily: 'Raleway',
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
           ),
           currentIndex: controller.selectedIndex.value,
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-                icon: Icon(
-                  Icons.home,
-                  size: 25,
-                ),
-                label: 'Home',
-                backgroundColor: Colors.white),
+              icon: Icon(
+                Icons.home,
+                size: 22,
+              ),
+              label: 'Home',
+              backgroundColor: Colors.white,
+            ),
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.date_range,
-                size: 20,
+                size: 22,
               ),
               label: 'Orders',
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.add,
-                size: 20,
+                size: 22,
               ),
               label: 'Properties',
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.person,
-                size: 20,
+                size: 22,
               ),
               label: 'Profile',
             ),
           ],
           backgroundColor: Colors.white,
-          iconSize: 40,
+          iconSize: 22,
           elevation: 5,
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.black,
+          selectedItemColor: _sienna,
+          unselectedItemColor: _espresso.withOpacity(0.5),
           onTap: controller.onTapped,
         ),
       );
