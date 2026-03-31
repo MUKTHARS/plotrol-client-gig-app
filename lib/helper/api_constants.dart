@@ -19,7 +19,7 @@ class ApiConstants {
   static String resetPassword = '${host}/user/password/reset';
   static String createRequester = '/egov-hrms/employees/_create';
   static String createCitizen = '/user/citizen/_create';
-  static String createHelpdeskUser = '${host}/user/citizen/_create';
+  static String createHelpdeskUser = '/admin/helpdesk-users/_create';
 
   static String individualSearch = '/individual/v1/_search';
   static String memberSearch = '/household/member/v1/_search';
@@ -50,7 +50,8 @@ class ApiConstants {
   // Local Go backend
   // Android emulator  → use 10.0.2.2 (ADB tunnels it to PC localhost)
   // Real device (WiFi) → use PC's LAN IP (run `ipconfig` to find it)
-  static String host = 'http://10.199.66.57:8080';
+  // static String host = 'http://10.199.66.57:8080';
+   static String host = 'http://10.0.2.2:8080';
   /// authentication
 
   static String fileUpload = '/filestore/v1/files';

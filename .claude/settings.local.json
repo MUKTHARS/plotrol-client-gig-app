@@ -16,7 +16,15 @@
       "Read(//c/saple.ai/plotrol_client_gig_app_backend/**)",
       "Read(//c/saple.ai/plotrol_client_gig_app_main/**)",
       "Read(//c/saple.ai/plotrol/**)",
-      "Read(//c/saple.ai/**)"
+      "Read(//c/saple.ai/**)",
+      "Bash(find /c/saple.ai -name *.db -o -name *.sqlite)",
+      "Read(//c/Users/Dell/**)",
+      "Bash(find /c -name \"plotrol.db\" -maxdepth 5)",
+      "Bash(tasklist)",
+      "Bash(powershell -command \":*)",
+      "Bash(powershell -command \"Get-ChildItem -Path ''C:\\\\'' -Filter ''plotrol.db'' -Recurse -ErrorAction SilentlyContinue -Depth 6 | Select-Object FullName\")",
+      "Bash(powershell -command 'dir C:\\\\saple.ai\\\\plotrol_client_gig_app_backend\\\\* -Include *.db')",
+      "Bash(powershell -command 'dir C:\\\\Users\\\\Dell\\\\* -Include *.db -Recurse')"
     ],
     "additionalDirectories": [
       "C:\\saple.ai\\plotrol_client_gig_app_backend\\internal\\employee"

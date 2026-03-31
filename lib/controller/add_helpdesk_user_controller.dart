@@ -72,6 +72,9 @@ class AddHelpdeskUserController extends GetxController {
       };
       if (email.isNotEmpty) body['emailId'] = email;
 
+      debugPrint('[CreateUser] Sending to: ${ApiConstants.createHelpdeskUser}');
+      debugPrint('[CreateUser] Body: ${jsonEncode(body)}');
+
       final Map<String, dynamic> response =
           await BaseService().makeRequest(
         url: ApiConstants.createHelpdeskUser,
@@ -80,16 +83,15 @@ class AddHelpdeskUserController extends GetxController {
         requestInfo: requestInfo,
       );
 
-      final statusVal = response['status'];
-      final codeVal = response['code'];
-      final message = response['message']?.toString() ?? '';
+      debugPrint('[CreateUser] Response: $response');
 
-      final bool isSuccess = statusVal == true;
-      final int code = codeVal is int
-          ? codeVal
-          : int.tryParse(codeVal?.toString() ?? '') ?? 0;
+      final int code = response['code'] is int
+          ? response['code']
+          : int.tryParse(response['code']?.toString() ?? '') ?? 0;
+      final bool isSuccess = response['status'] == true && code == 200;
+      final String message = response['message']?.toString() ?? '';
 
-      if (isSuccess && code == 200) {
+      if (isSuccess) {
         btnController.success();
         Toast.showToast('User created successfully');
         await Future.delayed(const Duration(milliseconds: 800));
@@ -97,14 +99,22 @@ class AddHelpdeskUserController extends GetxController {
         Get.back();
       } else if (code == 409) {
         btnController.reset();
-        Toast.showToast(message.isNotEmpty ? message : 'Mobile or email already registered');
+        Toast.showToast(message.isNotEmpty ? message : 'User with this mobile number already exists');
       } else {
         btnController.reset();
         Toast.showToast(message.isNotEmpty ? message : 'Failed to create user');
       }
     } catch (e) {
+      debugPrint('[CreateUser] Exception: $e | type: ${e.runtimeType}');
+      if (e is CustomException) {
+        debugPrint('[CreateUser] statusCode=${e.statusCode} message=${e.message}');
+      }
       btnController.reset();
-      Toast.showToast('Failed to create user. Please try again.');
+      if (e is CustomException && e.message.isNotEmpty) {
+        Toast.showToast(e.message);
+      } else {
+        Toast.showToast('Failed to create user. Please try again.');
+      }
     }
   }
 
