@@ -25,7 +25,8 @@
       "Bash(powershell -command \"Get-ChildItem -Path ''C:\\\\'' -Filter ''plotrol.db'' -Recurse -ErrorAction SilentlyContinue -Depth 6 | Select-Object FullName\")",
       "Bash(powershell -command 'dir C:\\\\saple.ai\\\\plotrol_client_gig_app_backend\\\\* -Include *.db')",
       "Bash(powershell -command 'dir C:\\\\Users\\\\Dell\\\\* -Include *.db -Recurse')",
-      "Bash(find c:saple.aiplotrol_client_gig_app_backend -type f \\\\\\(-name *.go -o -name *.js -o -name *.ts \\\\\\))"
+      "Bash(find c:saple.aiplotrol_client_gig_app_backend -type f \\\\\\(-name *.go -o -name *.js -o -name *.ts \\\\\\))",
+      "Bash(\"C:/saple.ai/plotrol_client_gig_app/.env\":*)"
     ],
     "additionalDirectories": [
       "C:\\saple.ai\\plotrol_client_gig_app_backend\\internal\\employee"

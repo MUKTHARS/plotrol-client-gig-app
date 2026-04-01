@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:plotrol/helper/utils.dart';
 import 'package:plotrol/view/gig_views/gig_home_view.dart';
@@ -15,6 +16,8 @@ import 'model/response/autentication_response/autentication_response.dart';
  // <-- exposes checkIsGig / checkIsPGRAdmin
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   ApiConstants.login = ApiConstants.loginDev;
   runApp(const MyApp());
 }
