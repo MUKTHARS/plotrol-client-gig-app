@@ -124,8 +124,7 @@ class ViewAllOrdersController extends GetxController with GetTickerProviderState
             ? await enrichOrdersWithImageUrls(
                 plotrolOrders
                         .where((s) =>
-                            (s.workflow?.assignes ?? []).contains(userRequest?.uuid) ||
-                            s.service?.applicationStatus == "RESOLVED")
+                            (s.workflow?.assignes ?? []).contains(userRequest?.uuid))
                         .toList(),
                 ApiConstants.tenantId)
             : await enrichOrdersWithImageUrls(

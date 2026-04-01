@@ -461,8 +461,7 @@ class HomeScreenController extends GetxController {
 
       final assignedOrFiltered = isGig
           ? plotrolOrders.where((s) =>
-              (s.workflow?.assignes ?? []).contains(userRequest?.uuid) ||
-              s.service?.applicationStatus == 'RESOLVED').toList()
+              (s.workflow?.assignes ?? []).contains(userRequest?.uuid)).toList()
           : plotrolOrders;
 
       logger.i('[getOrdersResult] After role filter: ${assignedOrFiltered.length} records');
