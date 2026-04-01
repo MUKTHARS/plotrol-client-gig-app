@@ -91,6 +91,9 @@ class RequesterLoginController extends GetxController {
 
   @override
   void onInit() {
+    passwordController.addListener(() {
+      password.value = passwordController.text;
+    });
     // fcmToken();
     super.onInit();
   }
