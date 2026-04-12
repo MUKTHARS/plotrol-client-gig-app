@@ -312,24 +312,6 @@ class AddYourProperties extends StatelessWidget {
                           letterSpacing: -0.3,
                         ),
                       ),
-                      const Spacer(),
-                      Obx(() {
-                        return GestureDetector(
-                          onTap: () {
-                            controller.toggleDropdown();
-                            controller.update();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              controller.isDropdownOpened.value
-                                  ? Icons.keyboard_arrow_up
-                                  : Icons.keyboard_arrow_down,
-                              color: _steel,
-                            ),
-                          ),
-                        );
-                      }),
                     ],
                   ),
                 ),
@@ -405,7 +387,7 @@ class AddYourProperties extends StatelessWidget {
                 const SizedBox(height: 8),
                 // Map / address search input
                 Obx(() => Offstage(
-                  offstage: controller.isDropdownOpened.value || controller.locationMethod.value == 1,
+                  offstage: controller.locationMethod.value == 1,
                   child: CustomTextFormField(
                     controller: controller.addressController,
                     labelText: 'Search address',
@@ -422,7 +404,7 @@ class AddYourProperties extends StatelessWidget {
                 )),
                 // what3words input
                 Obx(() => Offstage(
-                  offstage: controller.isDropdownOpened.value || controller.locationMethod.value == 0,
+                  offstage: controller.locationMethod.value == 0,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -485,32 +467,6 @@ class AddYourProperties extends StatelessWidget {
                         }),
                       )
                     : const SizedBox(),
-                controller.isDropdownOpened.value
-                    ? Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          CustomTextFormField(
-                            controller: controller.suburbController,
-                            labelText: 'Suburb',
-                          ),
-                          const SizedBox(height: 16),
-                          CustomTextFormField(
-                            controller: controller.cityController,
-                            labelText: 'City',
-                          ),
-                          const SizedBox(height: 16),
-                          CustomTextFormField(
-                            controller: controller.stateController,
-                            labelText: 'State',
-                          ),
-                          const SizedBox(height: 16),
-                          CustomTextFormField(
-                            controller: controller.postCodeController,
-                            labelText: 'Pincode',
-                          ),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
               ],
             )))),
         bottomNavigationBar: SafeArea(
