@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -70,16 +71,30 @@ func (h *IndividualHandler) SearchIndividuals(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Look up the individual's clientReferenceId from the individuals table.
+	// This UUID is what is stored in household_members.individual_client_reference_id,
+	// so returning it here lets the Flutter app filter household members correctly.
+	var indClientRefId string
+	_ = h.db.QueryRow(`
+		SELECT client_reference_id FROM individuals
+		WHERE mobile_number = $1 AND is_deleted = false
+		ORDER BY id ASC
+		LIMIT 1
+	`, mobile).Scan(&indClientRefId)
+
+	log.Printf("[SearchIndividuals] mobile=%s usersId=%d indClientRefId=%q", mobile, u.ID, indClientRefId)
+
 	individual := map[string]interface{}{
-		"id":           fmt.Sprintf("IND-%d", u.ID),
-		"individualId": fmt.Sprintf("IND-%d", u.ID),
-		"tenantId":     u.TenantID,
-		"userUuid":     u.UUID, // must NOT be null – Flutter filters on this
-		"userId":       fmt.Sprintf("%d", u.ID),
-		"mobileNumber": nullStr(u.MobileNumber),
-		"email":        nullStr(u.EmailID),
-		"isDeleted":    false,
-		"isSystemUser": false,
+		"id":                 fmt.Sprintf("IND-%d", u.ID),
+		"individualId":       fmt.Sprintf("IND-%d", u.ID),
+		"clientReferenceId":  indClientRefId, // UUID stored during property creation — used to filter household members
+		"tenantId":           u.TenantID,
+		"userUuid":           u.UUID, // must NOT be null – Flutter filters on this
+		"userId":             fmt.Sprintf("%d", u.ID),
+		"mobileNumber":       nullStr(u.MobileNumber),
+		"email":              nullStr(u.EmailID),
+		"isDeleted":          false,
+		"isSystemUser":       false,
 		"name": map[string]interface{}{
 			"givenName":  nullStr(u.FirstName),
 			"familyName": nullStr(u.LastName),
@@ -91,9 +106,9 @@ func (h *IndividualHandler) SearchIndividuals(w http.ResponseWriter, r *http.Req
 					"code": "MZ.ADMIN.WARD1",
 					"name": "Ward 1",
 				},
-				"city":    nullStr(u.City),
-				"street":  nullStr(u.Address),
-				"suburb":  nullStr(u.Suburb),
+				"city":     nullStr(u.City),
+				"street":   nullStr(u.Address),
+				"suburb":   nullStr(u.Suburb),
 				"postcode": nullStr(u.Postcode),
 			},
 		},

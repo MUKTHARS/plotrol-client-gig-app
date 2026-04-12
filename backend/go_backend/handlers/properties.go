@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -346,23 +347,27 @@ func (h *PropertyHandler) SearchHouseholds(w http.ResponseWriter, r *http.Reques
 	filter, _ := body["Household"].(map[string]interface{})
 
 	query := h.gdb.Model(&dbpkg.Household{}).Where("is_deleted = false")
+	hasFilter := false
 
 	if filter != nil {
 		if tenantID := strVal(filter["tenantId"]); tenantID != "" {
 			query = query.Where("tenant_id = ?", tenantID)
 		}
-		if refs, ok := filter["clientReferenceId"].([]interface{}); ok && len(refs) > 0 {
-			ids := make([]string, 0, len(refs))
-			for _, r := range refs {
-				if s := strVal(r); s != "" {
-					ids = append(ids, s)
-				}
-			}
-			if len(ids) > 0 {
-				query = query.Where("client_reference_id IN ?", ids)
-			}
+		clientRefIds := toStringSlice(filter["clientReferenceId"])
+		if len(clientRefIds) > 0 {
+			query = query.Where("client_reference_id IN ?", clientRefIds)
+			hasFilter = true
 		}
 	}
+
+	// Safety guard: never return all households without a meaningful filter.
+	if !hasFilter {
+		log.Printf("[SearchHouseholds] WARN: no meaningful filter provided — returning empty list to prevent data leak (filter=%v)", filter)
+		writeJSON(w, http.StatusOK, map[string]interface{}{"Households": []map[string]interface{}{}})
+		return
+	}
+
+	log.Printf("[SearchHouseholds] filter=%v", filter)
 
 	var records []dbpkg.Household
 	if err := query.Find(&records).Error; err != nil {
@@ -518,6 +523,7 @@ func (h *PropertyHandler) SearchHouseholdMembers(w http.ResponseWriter, r *http.
 	filter, _ := body["HouseholdMember"].(map[string]interface{})
 
 	query := h.gdb.Model(&dbpkg.HouseholdMember{}).Where("is_deleted = false")
+	hasFilter := false
 
 	if filter != nil {
 		if tenantID := strVal(filter["tenantId"]); tenantID != "" {
@@ -525,10 +531,37 @@ func (h *PropertyHandler) SearchHouseholdMembers(w http.ResponseWriter, r *http.
 		}
 		if hcRefId := strVal(filter["householdClientReferenceId"]); hcRefId != "" {
 			query = query.Where("household_client_reference_id = ?", hcRefId)
+			hasFilter = true
 		}
-		if icRefId := strVal(filter["individualClientReferenceId"]); icRefId != "" {
-			query = query.Where("individual_client_reference_id = ?", icRefId)
+		// Merge individualClientReferenceId and individualId into one IN-clause so
+		// they are OR'd at the DB level, not AND'd.
+		// Flutter sends both fields; individualClientReferenceId holds the UUID
+		// that is stored in individual_client_reference_id, while individualId
+		// holds "IND-{n}" which is a fallback. Combining them in one IN avoids
+		// the "no row can satisfy two separate AND conditions" bug.
+		icRefIds := toStringSlice(filter["individualClientReferenceId"])
+		indIds := toStringSlice(filter["individualId"])
+		seen := map[string]bool{}
+		allIndRefs := make([]string, 0, len(icRefIds)+len(indIds))
+		for _, s := range append(icRefIds, indIds...) {
+			if !seen[s] {
+				seen[s] = true
+				allIndRefs = append(allIndRefs, s)
+			}
 		}
+		if len(allIndRefs) > 0 {
+			query = query.Where("individual_client_reference_id IN ?", allIndRefs)
+			hasFilter = true
+		}
+	}
+
+	// Safety guard: never scan all rows when no meaningful filter was supplied.
+	// A missing or empty filter would otherwise return every household member,
+	// leaking other users' properties — the root cause of the privacy breach.
+	if !hasFilter {
+		log.Printf("[SearchHouseholdMembers] WARN: no meaningful filter provided — returning empty list to prevent data leak (filter=%v)", filter)
+		writeJSON(w, http.StatusOK, map[string]interface{}{"HouseholdMembers": []map[string]interface{}{}})
+		return
 	}
 
 	var records []dbpkg.HouseholdMember
@@ -536,6 +569,8 @@ func (h *PropertyHandler) SearchHouseholdMembers(w http.ResponseWriter, r *http.
 		writeJSON(w, http.StatusInternalServerError, errResp("DB error: "+err.Error()))
 		return
 	}
+
+	log.Printf("[SearchHouseholdMembers] filter=%v → %d record(s)", filter, len(records))
 
 	list := make([]map[string]interface{}, 0, len(records))
 	for _, rec := range records {
@@ -556,6 +591,30 @@ func (h *PropertyHandler) SearchHouseholdMembers(w http.ResponseWriter, r *http.
 	}
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{"HouseholdMembers": list})
+}
+
+// toStringSlice converts a JSON value to a []string.
+// Accepts either a []interface{} (JSON array) or a plain string.
+// Non-empty strings are collected; empty strings are skipped.
+func toStringSlice(v interface{}) []string {
+	if v == nil {
+		return nil
+	}
+	switch val := v.(type) {
+	case []interface{}:
+		out := make([]string, 0, len(val))
+		for _, elem := range val {
+			if s := strVal(elem); s != "" {
+				out = append(out, s)
+			}
+		}
+		return out
+	default:
+		if s := strVal(v); s != "" {
+			return []string{s}
+		}
+	}
+	return nil
 }
 
 // ─── shared decode helper ─────────────────────────────────────────────────────

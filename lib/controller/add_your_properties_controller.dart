@@ -475,6 +475,8 @@ class AddYourPropertiesController extends GetxController {
       lastModifiedBy: userUuid,
       lastModifiedTime: AppUtils().millisecondsSinceEpoch(),
     );
+    logger.i('[addYourPropertiesResult] START — mobile=$mobileNumber tenantId=$tenantId individualClientRefId=$individualClientReferenceId householdClientRefId=$householdClientReferenceId');
+
     IndividualCreateResponse? individualResponse =
         await addIndividualRepository.addIndividual(
       Individual(
@@ -578,10 +580,18 @@ class AddYourPropertiesController extends GetxController {
                 landmark: notesController.text,
                 city: cityController.text,
                 pincode: postCodeController.text)));
+    logger.i('[addYourPropertiesResult] individualResponse id=${individualResponse?.individual?.id} clientRefId=${individualResponse?.individual?.clientReferenceId}');
+    logger.i('[addYourPropertiesResult] householdResponse id=${result?.household?.id} clientRefId=${result?.household?.clientReferenceId}');
+
     if (individualResponse?.individual != null && result?.household != null) {
+      // Include server-assigned individualId so member search by individualId works.
+      final serverIndividualId = individualResponse!.individual!.id;
+      logger.i('[addYourPropertiesResult] Creating HouseholdMember: individualId=$serverIndividualId individualClientRefId=$individualClientReferenceId householdClientRefId=$householdClientReferenceId');
+
       HouseholdMemberCreateResponse? householdMemberResponse =
           await addHouseholdMemberRepository.addHouseholdMember(HouseholdMember(
         clientReferenceId: householdMemberClientReferenceId,
+        individualId: serverIndividualId,
         individualClientReferenceId: individualClientReferenceId,
         householdClientReferenceId: householdClientReferenceId,
         isHeadOfHousehold: true,

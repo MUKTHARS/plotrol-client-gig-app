@@ -29,6 +29,9 @@ class ProfileScreenController extends GetxController {
     _requesterLoginController.passwordController.clear();
 
     Get.delete<BottomNavigationController>();
+    // Delete HomeScreenController so the next user's login starts with a clean
+    // state — without this, getPropertiesDetails retains the previous user's data.
+    Get.delete<HomeScreenController>();
     Get.offAll(() => OnBoardPage());
     update();
   }

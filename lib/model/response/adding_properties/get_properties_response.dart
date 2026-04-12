@@ -6,9 +6,11 @@ class HouseholdsResponse {
   HouseholdsResponse({this.households});
 
   HouseholdsResponse.fromJson(Map<String, dynamic> json) {
-    if (json['Households'] != null) {
+    // Backend returns singular "Household" key (not plural "Households")
+    final raw = json['Household'] ?? json['Households'];
+    if (raw != null) {
       households = <Household>[];
-      json['Households'].forEach((v) {
+      raw.forEach((v) {
         households!.add(Household.fromJson(v));
       });
     }

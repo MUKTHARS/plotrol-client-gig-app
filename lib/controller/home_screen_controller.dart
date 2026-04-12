@@ -175,33 +175,98 @@ class HomeScreenController extends GetxController {
   }
 
   getPropertiesResult() async {
+    // ── Clear stale data immediately so no previous session leaks through ──────
+    getPropertiesDetails = [];
+    isPropertyLoading.value = true;
+    update();
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final userMobileNumber = prefs.getString('mobileNumber');
     String? userInfoString = prefs.getString('userInfo');
     Map? userInfo = userInfoString != null ? jsonDecode(userInfoString) : null;
-    IndividualsResponse? individualsResponse = await loginRepository.getIndividual({
-      "Individual": {
-        "mobileNumber": userMobileNumber != null && userMobileNumber.toString().trim().isNotEmpty ? [ userMobileNumber.toString().trim() ] : null
-      }
-    }, userInfo);
-    // Store user details
-    if(individualsResponse != null ){
 
-      final loggedInIndividual = individualsResponse.individuals;
+    logger.i('[getPropertiesResult] START — mobileNumber=$userMobileNumber');
 
-      HouseholdMembersResponse? householdMembers = await householdMemberRepository.getHouseholdMember({
-        "HouseholdMember" : {
-          "individualId": loggedInIndividual?.map((i) => i.id).toList()
-        }
-      });
-    HouseholdsResponse? result = await _getPropertiesRepository.getProperties((householdMembers?.householdMembers ?? []).isNotEmpty ? householdMembers!.householdMembers!.map((h) => h.householdClientReferenceId! ).toList() : []);
-    if ((result?.households ?? []).isNotEmpty) {
-      getPropertiesDetails = await enrichHouseholdsWithImageUrls(result?.households ?? [], ApiConstants.tenantId)
-        ..sort((a, b) => (b.auditDetails?.createdTime ?? 0).compareTo(a.auditDetails?.createdTime ?? 0));
+    if (userMobileNumber == null || userMobileNumber.trim().isEmpty) {
+      logger.w('[getPropertiesResult] No mobileNumber in prefs — aborting property load');
       isPropertyLoading.value = false;
       update();
-     }
+      return;
     }
+
+    IndividualsResponse? individualsResponse = await loginRepository.getIndividual({
+      "Individual": {
+        "mobileNumber": [ userMobileNumber.trim() ]
+      }
+    }, userInfo);
+
+    logger.i('[getPropertiesResult] Individual search returned ${individualsResponse?.individuals?.length ?? 0} record(s)');
+    for (final ind in individualsResponse?.individuals ?? []) {
+      logger.i('[getPropertiesResult]   individual id=${ind.id} clientRefId=${ind.clientReferenceId} mobile=${ind.mobileNumber}');
+    }
+
+    if (individualsResponse == null || (individualsResponse.individuals ?? []).isEmpty) {
+      logger.w('[getPropertiesResult] No individual found for mobile=$userMobileNumber — no properties to show');
+      isPropertyLoading.value = false;
+      update();
+      return;
+    }
+
+    final loggedInIndividual = individualsResponse.individuals!;
+
+    // Send BOTH server-assigned IDs and client reference IDs so the backend's
+    // OR filter matches records created with either identifier type.
+    final individualServerIds = loggedInIndividual.map((i) => i.id).where((id) => id != null && id!.isNotEmpty).map((id) => id!).toList();
+    final individualClientRefIds = loggedInIndividual.map((i) => i.clientReferenceId).where((id) => id != null && id!.isNotEmpty).map((id) => id!).toList();
+
+    logger.i('[getPropertiesResult] Searching household members — serverIds=$individualServerIds clientRefIds=$individualClientRefIds');
+
+    HouseholdMembersResponse? householdMembers = await householdMemberRepository.getHouseholdMember({
+      "HouseholdMember": {
+        "individualId": individualServerIds.isNotEmpty ? individualServerIds : null,
+        "individualClientReferenceId": individualClientRefIds.isNotEmpty ? individualClientRefIds : null,
+      }
+    });
+
+    final memberList = householdMembers?.householdMembers ?? [];
+    logger.i('[getPropertiesResult] Household member search returned ${memberList.length} record(s)');
+    for (final m in memberList) {
+      logger.i('[getPropertiesResult]   member id=${m.id} householdClientRefId=${m.householdClientReferenceId} individualId=${m.individualId}');
+    }
+
+    if (memberList.isEmpty) {
+      logger.w('[getPropertiesResult] No household members found — user has no properties');
+      isPropertyLoading.value = false;
+      update();
+      return;
+    }
+
+    final householdClientRefIds = memberList
+        .map((h) => h.householdClientReferenceId)
+        .where((id) => id != null && id!.isNotEmpty)
+        .map((id) => id!)
+        .toList();
+
+    logger.i('[getPropertiesResult] Fetching households for clientRefIds=$householdClientRefIds');
+
+    HouseholdsResponse? result = await _getPropertiesRepository.getProperties(householdClientRefIds);
+
+    final fetchedHouseholds = result?.households ?? [];
+    logger.i('[getPropertiesResult] Household search returned ${fetchedHouseholds.length} record(s)');
+    for (final hh in fetchedHouseholds) {
+      logger.i('[getPropertiesResult]   household id=${hh.id} clientRefId=${hh.clientReferenceId}');
+    }
+
+    if (fetchedHouseholds.isNotEmpty) {
+      getPropertiesDetails = await enrichHouseholdsWithImageUrls(fetchedHouseholds, ApiConstants.tenantId)
+        ..sort((a, b) => (b.auditDetails?.createdTime ?? 0).compareTo(a.auditDetails?.createdTime ?? 0));
+      logger.i('[getPropertiesResult] Loaded ${getPropertiesDetails.length} properties for user mobileNumber=$userMobileNumber');
+    } else {
+      logger.w('[getPropertiesResult] No households returned — showing empty state');
+    }
+
+    isPropertyLoading.value = false;
+    update();
   }
 
   // Future<List<FileStoreModel>?> fetchFiles(List<String> storeIds, String tenantId) async {
