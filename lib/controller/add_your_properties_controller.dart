@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:dio/dio.dart' as dio;
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -94,6 +95,11 @@ class AddYourPropertiesController extends GetxController {
       GetPropertiesRepository();
 
   final isDropdownOpened = false.obs;
+
+  // 0 = map/address, 1 = what3words
+  final locationMethod = 0.obs;
+
+  final TextEditingController w3wController = TextEditingController();
 
   void toggleDropdown() {
     isDropdownOpened.value = !isDropdownOpened.value;
@@ -676,6 +682,35 @@ class AddYourPropertiesController extends GetxController {
     }
 
     // print("Address: $address");
+  }
+
+  Future<void> convertW3WToCoords(String address) async {
+    final cleaned = address.trim().replaceAll(RegExp(r'^/{1,3}'), '');
+    final parts = cleaned.split('.');
+    if (parts.length != 3 || parts.any((p) => p.trim().isEmpty)) {
+      Toast.showToast('Enter a valid what3words address (word.word.word)');
+      return;
+    }
+    try {
+      final url = Uri.parse(
+        'https://api.what3words.com/v3/convert-to-coordinates?words=$cleaned&key=${ApiConstants.w3wApiKey}',
+      );
+      final response = await http.get(url);
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['coordinates'] != null) {
+        final lat = (data['coordinates']['lat'] as num).toDouble();
+        final lng = (data['coordinates']['lng'] as num).toDouble();
+        currentLat.value = lat.toString();
+        currentLong.value = lng.toString();
+        await getAddressFromLatLng(lat, lng);
+        Toast.showToast('Location set from what3words');
+      } else {
+        final msg = data['error']?['message'] ?? 'Invalid what3words address';
+        Toast.showToast(msg);
+      }
+    } catch (e) {
+      Toast.showToast('Failed to convert what3words address');
+    }
   }
 
   onSearchTextChanged(String text) async {

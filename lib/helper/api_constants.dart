@@ -53,6 +53,7 @@ class ApiConstants {
   // Android emulator  → http://10.0.2.2:8080
   // Real device (WiFi) → http://<your-PC-LAN-IP>:8080
   static String get host => dotenv.env['API_HOST'] ?? 'http://10.0.2.2:8080';
+  static String get w3wApiKey => dotenv.env['W3W_API_KEY'] ?? '';
   /// authentication
 
   static String fileUpload = '/filestore/v1/files';

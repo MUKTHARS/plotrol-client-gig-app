@@ -336,8 +336,76 @@ class AddYourProperties extends StatelessWidget {
                 const SizedBox(
                   height: 12,
                 ),
-                Offstage(
-                  offstage: controller.isDropdownOpened.value,
+                // Location method toggle: Map vs what3words
+                Obx(() => Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => controller.locationMethod.value = 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: controller.locationMethod.value == 0 ? _sienna : _parchment,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: controller.locationMethod.value == 0 ? _sienna : _dividerLine,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.map_outlined, size: 14,
+                                  color: controller.locationMethod.value == 0 ? Colors.white : _steel),
+                              const SizedBox(width: 4),
+                              Text('Map',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: controller.locationMethod.value == 0 ? Colors.white : _steel,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => controller.locationMethod.value = 1,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: controller.locationMethod.value == 1 ? _sienna : _parchment,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: controller.locationMethod.value == 1 ? _sienna : _dividerLine,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Icon(Icons.grid_3x3, size: 14,
+                              //     color: controller.locationMethod.value == 1 ? Colors.white : _steel),
+                              const SizedBox(width: 4),
+                              Text('///what3words',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: controller.locationMethod.value == 1 ? Colors.white : _steel,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )),
+                const SizedBox(height: 8),
+                // Map / address search input
+                Obx(() => Offstage(
+                  offstage: controller.isDropdownOpened.value || controller.locationMethod.value == 1,
                   child: CustomTextFormField(
                     controller: controller.addressController,
                     labelText: 'Search address',
@@ -351,7 +419,36 @@ class AddYourProperties extends StatelessWidget {
                         },
                         child: const Icon(Icons.gps_fixed_outlined, color: _sienna)),
                   ),
-                ),
+                )),
+                // what3words input
+                Obx(() => Offstage(
+                  offstage: controller.isDropdownOpened.value || controller.locationMethod.value == 0,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: CustomTextFormField(
+                          controller: controller.w3wController,
+                          labelText: '///word.word.word',
+                          maxLines: 1,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => controller.convertW3WToCoords(controller.w3wController.text),
+                        child: Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: _sienna,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.search, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
                 controller.predictions.isNotEmpty
                     ? Container(
                         height: Get.height * 0.20,
