@@ -72,13 +72,21 @@ func (h *IndividualHandler) SearchIndividuals(w http.ResponseWriter, r *http.Req
 	}
 
 	// Look up the individual's clientReferenceId from the individuals table.
-	// This UUID is what is stored in household_members.individual_client_reference_id,
-	// so returning it here lets the Flutter app filter household members correctly.
+	// This UUID is stored in household_members.individual_client_reference_id and
+	// is the key used to filter household members for this user.
+	//
+	// Two paths are tried in one query to handle all record ages:
+	//   1. JOIN via created_by = users.uuid  — reliable for all records because
+	//      auditDetails.createdBy is always the logged-in user's UUID.
+	//   2. Direct mobile_number match        — works when mobile was stored.
 	var indClientRefId string
 	_ = h.db.QueryRow(`
-		SELECT client_reference_id FROM individuals
-		WHERE mobile_number = $1 AND is_deleted = false
-		ORDER BY id ASC
+		SELECT i.client_reference_id
+		FROM individuals i
+		LEFT JOIN users u ON u.uuid = i.created_by
+		WHERE i.client_reference_id != ''
+		  AND (i.mobile_number = $1 OR u.mobile_number = $1)
+		ORDER BY i.id ASC
 		LIMIT 1
 	`, mobile).Scan(&indClientRefId)
 

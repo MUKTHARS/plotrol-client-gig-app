@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	dbpkg "plotrol-backend/db"
@@ -533,22 +535,73 @@ func (h *PropertyHandler) SearchHouseholdMembers(w http.ResponseWriter, r *http.
 			query = query.Where("household_client_reference_id = ?", hcRefId)
 			hasFilter = true
 		}
-		// Merge individualClientReferenceId and individualId into one IN-clause so
-		// they are OR'd at the DB level, not AND'd.
-		// Flutter sends both fields; individualClientReferenceId holds the UUID
-		// that is stored in individual_client_reference_id, while individualId
-		// holds "IND-{n}" which is a fallback. Combining them in one IN avoids
-		// the "no row can satisfy two separate AND conditions" bug.
+		// Collect all individual identity references into one deduped slice.
+		// Flutter sends two fields:
+		//   individualClientReferenceId — the UUID stored in individual_client_reference_id
+		//                                 (populated only when SearchIndividuals successfully
+		//                                  returns clientReferenceId from the individuals table)
+		//   individualId               — "IND-{users.id}" always present, but this string is
+		//                                 never stored directly in individual_client_reference_id
+		//
+		// Resolution strategy:
+		//   1. Use any real UUIDs directly (from individualClientReferenceId).
+		//   2. For "IND-{n}" values: parse the users.id, look up users.uuid,
+		//      then find all client_reference_id values in the individuals table
+		//      whose created_by matches that UUID. This handles existing users
+		//      whose properties were created before clientReferenceId was returned
+		//      by SearchIndividuals.
 		icRefIds := toStringSlice(filter["individualClientReferenceId"])
 		indIds := toStringSlice(filter["individualId"])
+
 		seen := map[string]bool{}
-		allIndRefs := make([]string, 0, len(icRefIds)+len(indIds))
-		for _, s := range append(icRefIds, indIds...) {
-			if !seen[s] {
+		allIndRefs := make([]string, 0)
+
+		// Add real UUIDs first
+		for _, s := range icRefIds {
+			if s != "" && !seen[s] {
 				seen[s] = true
 				allIndRefs = append(allIndRefs, s)
 			}
 		}
+
+		// Resolve any "IND-{n}" values → actual individual client_reference_id UUIDs
+		for _, s := range indIds {
+			if !strings.HasPrefix(s, "IND-") {
+				// Plain value — add directly as-is
+				if s != "" && !seen[s] {
+					seen[s] = true
+					allIndRefs = append(allIndRefs, s)
+				}
+				continue
+			}
+			userIDStr := strings.TrimPrefix(s, "IND-")
+			userID, err := strconv.ParseUint(userIDStr, 10, 64)
+			if err != nil {
+				continue
+			}
+			// Look up the user's UUID
+			var usr dbpkg.User
+			if err := h.gdb.Select("uuid").First(&usr, userID).Error; err != nil {
+				log.Printf("[SearchHouseholdMembers] user lookup failed for IND-%d: %v", userID, err)
+				continue
+			}
+			if usr.UUID == "" {
+				continue
+			}
+			// Find all individual client_reference_id values whose created_by = user UUID
+			var inds []dbpkg.Individual
+			h.gdb.Select("client_reference_id").
+				Where("created_by = ? AND client_reference_id != ''", usr.UUID).
+				Find(&inds)
+			log.Printf("[SearchHouseholdMembers] IND-%d → uuid=%s → %d individual(s)", userID, usr.UUID, len(inds))
+			for _, ind := range inds {
+				if !seen[ind.ClientReferenceId] {
+					seen[ind.ClientReferenceId] = true
+					allIndRefs = append(allIndRefs, ind.ClientReferenceId)
+				}
+			}
+		}
+
 		if len(allIndRefs) > 0 {
 			query = query.Where("individual_client_reference_id IN ?", allIndRefs)
 			hasFilter = true
