@@ -57,47 +57,40 @@ class _LocationMapState extends State<LocationMap> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Map View')),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            // Ensures the map takes up the available space
-            child: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                maxZoom: 45,
-                minZoom: 10,
-                initialCenter: LatLng(_latitude, _longitude),
-                initialZoom: 13.0,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate:
-                      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  subdomains: ['a', 'b', 'c'],
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: LatLng(_latitude, _longitude),
-                      child: const Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.location_pin,
-                            size: 40,
-                            color: Colors.red,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              maxZoom: 45,
+              minZoom: 10,
+              initialCenter: LatLng(_latitude, _longitude),
+              initialZoom: 13.0,
             ),
+            children: [
+              TileLayer(
+                urlTemplate:
+                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.plotrol',
+              ),
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: LatLng(_latitude, _longitude),
+                    child: const Icon(
+                      Icons.location_pin,
+                      size: 40,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           // Latitude/Longitude Display
-          Padding(
-            padding: const EdgeInsets.all(8.0),
+          Positioned(
+            bottom: widget.refreshLocation != null ? 80 : 16,
+            left: 16,
             child: Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 8,
@@ -121,8 +114,9 @@ class _LocationMapState extends State<LocationMap> {
           ),
           // Floating Action Button
           if (widget.refreshLocation != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
+            Positioned(
+              bottom: 16,
+              right: 16,
               child: FloatingActionButton(
                 onPressed: _getCurrentLocation,
                 child: const Icon(Icons.my_location),
